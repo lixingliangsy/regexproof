@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="RegexProof — Describe the pattern, get a working regex">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#EFF6FF"/>
+      <stop offset="100%" stop-color="#DBEAFE"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- terminal mock -->
+  <g transform="translate(680,90)" font-family="ui-monospace, Menlo, Consolas, monospace">
+    <rect width="450" height="270" rx="16" fill="#0F172A"/>
+    <circle cx="34" cy="34" r="7" fill="#EF4444"/>
+    <circle cx="60" cy="34" r="7" fill="#F59E0B"/>
+    <circle cx="86" cy="34" r="7" fill="#22C55E"/>
+    <text x="120" y="40" font-size="16" fill="#64748B">regexproof</text>
+    <text x="32" y="100" font-size="17" fill="#94A3B8">"a US phone like (415) 555-2671"</text>
+    <text x="32" y="150" font-size="20" font-weight="700" fill="#86EFAC">/\(?(\d{3})\)?[-.\s]?(\d{3})[-.\s]?(\d{4})/</text>
+    <text x="32" y="196" font-size="15" fill="#64748B"># \(?  optional "(" before area code</text>
+    <text x="32" y="222" font-size="15" fill="#64748B"># \d{3}  three-digit area code</text>
+    <text x="32" y="248" font-size="15" fill="#64748B"># edge: "+1 ..." not matched</text>
+  </g>
+
+  <g transform="translate(80,90)">
+    <g transform="translate(0,0)">
+      <rect width="48" height="48" rx="10" fill="url(#accent)"/>
+      <text x="24" y="33" text-anchor="middle" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="20" font-weight="800" fill="#fff">.*</text>
+      <text x="64" y="34" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="28" font-weight="700" fill="#0F172A">RegexProof</text>
+    </g>
+    <text x="0" y="190" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="60" font-weight="800" fill="#0F172A">Describe the pattern,</text>
+    <text x="0" y="256" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="60" font-weight="800" fill="#0F172A">get a working regex.</text>
+    <text x="0" y="316" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="26" font-weight="500" fill="#334155">Plain-English to regex — explained, with edge cases called out.</text>
+    <g transform="translate(0,380)">
+      <rect width="220" height="52" rx="10" fill="#2563EB"/>
+      <text x="110" y="34" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="20" font-weight="600" fill="#fff">Forge a regex →</text>
+    </g>
+    <text x="0" y="448" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="20" font-weight="600" fill="#1D4ED8">Works in JavaScript · Python · Go · PCRE · Rust</text>
+  </g>
+  <text x="1120" y="600" text-anchor="end" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="14" fill="#64748B">regexproof.lxsaihub.com</text>
+</svg>

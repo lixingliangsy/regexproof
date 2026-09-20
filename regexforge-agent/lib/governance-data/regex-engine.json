@@ -1,0 +1,55 @@
+{
+  "version": "regexforge-engine@2026-07-24",
+  "standard": "Regex-engine semantics & dialect differences",
+  "source": "ECMA-262 (JavaScript RegExp), regular-expressions.info flavor guide, and engine documentation",
+  "entries": [
+    {
+      "id": "ecma262-regexp",
+      "ref": "https://www.ecma-international.org/publications/standards/Ecma-262.htm",
+      "title": "ECMAScript RegExp semantics (ECMA-262)",
+      "body": "ECMA-262 defines JavaScript's RegExp as an NFA backtracking engine. Flags: g (global), i (ignoreCase), m (multiline), s (dotAll), u (Unicode), y (sticky). ES2018 added lookbehind and named groups; ES2024 added the /v flag (unicodeSets) with string-set notation and difference/intersubtraction of classes. JavaScript has NO possessive quantifiers (a*+) and NO atomic groups (?>...). Invalid backreferences throw SyntaxError at construction; unmatched groups in replacement are treated as empty.",
+      "tags": ["ecmascript", "javascript", "semantics", "flags"],
+      "verify": true
+    },
+    {
+      "id": "ecma262-unicode-u",
+      "ref": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp",
+      "title": "Unicode mode and property escapes (ECMA-262 /u and /v)",
+      "body": "In Unicode mode (u flag, or implicitly v), the pattern is parsed as code points, \\u{...} escapes are allowed, and Unicode property escapes \\p{...} become available (e.g. \\p{Script=Greek}, \\p{Emoji}). The /v flag (ES2024) extends this with set operations on character classes. Without u, surrogates and astral characters are matched as two code units, producing silently wrong matches on non-BMP text. Always test multilingual input in u/v mode.",
+      "tags": ["ecmascript", "unicode", "u-flag", "v-flag"],
+      "verify": true
+    },
+    {
+      "id": "pcre-backtracking",
+      "ref": "https://www.regular-expressions.info/refadv.html",
+      "title": "PCRE backtracking, lookaround, atomic groups & possessive quantifiers",
+      "body": "PCRE/PCRE2 is a backtracking engine that supports lookahead (?=..), lookbehind (?<=..), atomic groups (?>..) and possessive quantifiers (a*+, a++). Atomic groups and possessives eliminate backtracking for a sub-expression and are the primary ReDoS mitigation when you must stay on a backtracking engine. Without them, nested/overlapping quantifiers can blow up exponentially. PCRE2 also offers JIT compilation and match-time limits for defense in depth.",
+      "tags": ["pcre", "backtracking", "atomic-group", "possessive"],
+      "verify": true
+    },
+    {
+      "id": "go-re2-linear",
+      "ref": "https://pkg.go.dev/regexp",
+      "title": "Go regexp uses RE2 — linear time, no backrefs/lookaround",
+      "body": "Go's regexp package is backed by RE2, a DFA-based engine that guarantees linear time and CANNOT suffer catastrophic backtracking. The trade-off: it has no backreferences and no lookaround ((?<=) / (?=)). Patterns that rely on capture-backrefs or lookaround fail to compile under Go. Prefer Go's regexp for any untrusted input — it is the safest default against ReDoS.",
+      "tags": ["go", "re2", "linear-time", "no-lookaround"],
+      "verify": true
+    },
+    {
+      "id": "rust-regex-automaton",
+      "ref": "https://docs.rs/regex",
+      "title": "Rust `regex` crate — finite automaton, no backrefs/lookaround",
+      "body": "The Rust `regex` crate compiles to a finite automaton and runs in linear time; it deliberately omits backreferences and lookaround to preserve that guarantee. For backrefs/lookaround use the `fancy-regex` crate, which is NOT linear-time and reintroduces ReDoS exposure. The standard crate's syntax is a restricted subset of PCRE; consult its docs for supported features before porting a pattern from Python/PCRE/JS.",
+      "tags": ["rust", "regex-crate", "linear-time", "fancy-regex"],
+      "verify": true
+    },
+    {
+      "id": "python-re-backtracking",
+      "ref": "https://docs.python.org/3/library/re.html",
+      "title": "Python `re` backtracking, no possessive/atomic",
+      "body": "CPython's `re` module is a backtracking engine. It supports lookaround and named groups ((?P<name>..)) but has NO possessive quantifiers and NO atomic groups. To avoid ReDoS on untrusted input, either bound input length, rewrite nested quantifiers, or switch to Google's `regex`/`re2` bindings (`google-re2`) for linear-time matching. Note `re` is not ISO 3166 or Unicode-collation aware by default.",
+      "tags": ["python", "re", "backtracking", "no-possessive"],
+      "verify": true
+    }
+  ]
+}

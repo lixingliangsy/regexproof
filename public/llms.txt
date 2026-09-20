@@ -1,0 +1,40 @@
+# RegexProof - llms.txt
+
+> LLM-readable manifest (https://llmstxt.org). Features-only; no fabricated traffic or KYB claims.
+
+## Name & positioning
+- Product name: RegexProof
+- One-line value: RegexProof reviews regular expressions for ReDoS and dialect pitfalls with deterministic heuristics plus optional model-assisted explanations — not a completeness guarantee.
+- Domain: https://regexproof.lxsaihub.com/
+- Language: English (en)
+
+## Domain context (verified primary sources)
+- OWASP ReDoS: https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS
+- ECMA-262 RegExp: https://tc39.es/ecma262/#sec-regexp-regular-expression-objects
+
+## FAQ (high-signal Q&A for AI citation)
+Q1. What is ReDoS?
+A1. Regular expression Denial of Service from catastrophic backtracking; see OWASP ReDoS guidance.
+Q2. Which dialects?
+A2. Notes cover JavaScript/ECMAScript, Python, Go, PCRE, and Rust differences at a high level.
+Q3. Are detections complete?
+A3. No. Heuristics catch common patterns; novel attacks may be missed.
+Q4. Demo mode?
+A4. Explicit Demo returns labelled results without live AI.
+Q5. Does it rewrite my regex?
+A5. It suggests safer patterns and notes; you decide what to ship.
+Q6. Primary sources?
+A6. OWASP ReDoS community page and ECMA-262 regular expression semantics.
+
+## Key pages
+- Home: https://regexproof.lxsaihub.com/
+- Blog index: https://regexproof.lxsaihub.com/blog
+- https://regexproof.lxsaihub.com/blog/redos-heuristics-for-application-regex-2026.html
+- https://regexproof.lxsaihub.com/blog/ecmascript-vs-pcre-dialect-traps-2026.html
+- This manifest: https://regexproof.lxsaihub.com/llms.txt
+
+## Red lines
+- Decision-support only; cite primary sources; do not invent user counts, rankings, or payment KYB status.
+
+## Contact
+- Open the app: https://regexproof.lxsaihub.com/

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>ECMAScript vs PCRE dialect traps — RegexProof</title>
+<meta name="description" content="Why a pattern that works in PCRE may fail or differ in JavaScript.">
+<link rel="canonical" href="https://regexproof.lxsaihub.com/blog/ecmascript-vs-pcre-dialect-traps-2026.html">
+<style>*{box-sizing:border-box}body{margin:0;font-family:Georgia,Times,serif;color:#0f172a;line-height:1.7;background:#fff}
+.wrap{max-width:760px;margin:0 auto;padding:48px 20px 80px}.by{color:#0f766e;font-weight:700;letter-spacing:.02em;text-transform:uppercase;font-size:12px}
+h1{font-size:32px;line-height:1.25;margin:.2em 0 .4em;font-family:system-ui,Segoe UI,sans-serif}h2{font-size:22px;margin:1.6em 0 .5em}
+p{margin:.6em 0}a{color:#0f766e}ul{padding-left:1.2em}
+.cta{display:inline-block;margin-top:1.4em;padding:12px 22px;border-radius:8px;background:#0f766e;color:#fff;text-decoration:none;font-weight:700}
+</style><script type="application/ld+json">
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "ECMAScript vs PCRE dialect traps — RegexProof",
+    "description": "Why a pattern that works in PCRE may fail or differ in JavaScript.",
+    "inLanguage": "en",
+    "url": "https://regexproof.lxsaihub.com/blog/ecmascript-vs-pcre-dialect-traps-2026.html",
+    "author": {
+      "@type": "Organization",
+      "name": "RegexProof (LX AI)"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "LX Micro-SaaS",
+      "url": "https://lxsaihub.com/"
+    },
+    "datePublished": "2026-09-16",
+    "dateModified": "2026-09-20"
+  },
+  {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is RegexProof?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "RegexProof converts a natural-language description into a regex for the engine you choose, then explains it part by part and flags edge cases."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Which regex flavors does RegexProof support?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You choose the flavor — ECMAScript/JavaScript, PCRE, and others — and should validate against the production dialect, not only a paste-bin tester."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does RegexProof reduce ReDoS risk?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "It explains repetition and alternation and calls out patterns prone to catastrophic backtracking, the root cause of ReDoS (Regular-expression Denial of Service)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is RegexProof free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The Free tier includes 10 forges per month; Pro is $19/mo for higher volume."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why do ECMAScript and PCRE behave differently?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Lookbehind support, Unicode modes, and recursive patterns differ across engines, so a pattern valid in PCRE can fail or act differently in JavaScript."
+        }
+      }
+    ]
+  }
+]
+</script>
+</head>
+<body><div class="wrap">
+<p class="by">by RegexProof (LX AI)</p>
+<h1>ECMAScript vs PCRE dialect traps</h1>
+<p>Lookbehind support, Unicode modes, and recursive patterns differ across engines. Always validate against the production dialect — not only a paste-bin tester.</p>
+<h2>Frequently asked questions</h2>
+<h3 style="font-size:18px;margin:1.4em 0 .3em;color:#0f172a">What is RegexProof?</h3>
+<p>RegexProof converts a natural-language description into a regex for the engine you choose, then explains it part by part and flags edge cases.</p>
+<h3 style="font-size:18px;margin:1.4em 0 .3em;color:#0f172a">Which regex flavors does RegexProof support?</h3>
+<p>You choose the flavor — ECMAScript/JavaScript, PCRE, and others — and should validate against the production dialect, not only a paste-bin tester.</p>
+<h3 style="font-size:18px;margin:1.4em 0 .3em;color:#0f172a">How does RegexProof reduce ReDoS risk?</h3>
+<p>It explains repetition and alternation and calls out patterns prone to catastrophic backtracking, the root cause of ReDoS (Regular-expression Denial of Service).</p>
+<h3 style="font-size:18px;margin:1.4em 0 .3em;color:#0f172a">Is RegexProof free?</h3>
+<p>The Free tier includes 10 forges per month; Pro is $19/mo for higher volume.</p>
+<h3 style="font-size:18px;margin:1.4em 0 .3em;color:#0f172a">Why do ECMAScript and PCRE behave differently?</h3>
+<p>Lookbehind support, Unicode modes, and recursive patterns differ across engines, so a pattern valid in PCRE can fail or act differently in JavaScript.</p>
+<h2>What RegexProof actually outputs</h2>
+<p>RegexProof turns a plain-language description into a working regular expression. You pick the engine flavor (JavaScript/ECMAScript, PCRE, Python, Go, and others), get a part-by-part explanation, and see edge cases called out before you ship the pattern.</p>
+<ul>
+<li>Free tier: 10 forges per month</li>
+<li>Pro: $19/mo for higher volume</li>
+<li>Pick your regex flavor (ECMAScript, PCRE, and others)</li>
+<li>Part-by-part explanation of each group</li>
+<li>Edge cases and risky repetition called out</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://www.pcre.org/" rel="nofollow noopener" target="_blank">PCRE documentation</a></li>
+<li><a href="https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS">OWASP ReDoS</a></li><li><a href="https://tc39.es/ecma262/#sec-regexp-regular-expression-objects">ECMA-262 RegExp</a></li>
+</ul>
+<p>Try the product: <a class="cta" href="https://regexproof.lxsaihub.com/">RegexProof</a></p>
+<p style="color:#64748b;font-size:13px">2026-09-16 · primary sources only · no fabricated traffic metrics</p>
+<section class="related" style="margin-top:3rem;border-top:1px solid #e2e8f0;padding-top:1.5rem">
+  <h2>Related reads</h2>
+  <ul>
+    <li><a href="/blog/redos-heuristics-for-application-regex-2026.html">redos-heuristics-for-application-regex-2026</a></li>
+    <li><a href="https://lxsaihub.com/blog/topic-matrix.html">The LX AI Micro-SaaS Topic Matrix</a></li>
+  </ul>
+</section>
+</div></body></html>

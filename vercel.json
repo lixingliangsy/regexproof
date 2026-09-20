@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "header", "key": "host", "value": "regexforge.lxsaihub.com" }],
+      "destination": "https://regexproof.lxsaihub.com/:path*",
+      "permanent": true
+    }
+  ]
+}

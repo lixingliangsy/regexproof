@@ -1,0 +1,228 @@
+import Head from 'next/head'
+
+import { buildFaqJsonLd, buildHowToJsonLd } from '../lib/schema'
+
+const faqs = [
+  {
+    "question": "What is RegexProof — and when to use it",
+    "answer": "RegexProof turns a plain-English description into a correct regular expression for your language, with a part-by-part explanation and edge cases called out. It is for developers who need a working regex without hand-writing it. Use it when you must match a format but are unsure of the syntax."
+  },
+  {
+    "question": "How to build a regex in 10 minutes",
+    "answer": "A practical first-regex path using RegexProof: describe what it should match, pick your language flavor, then generate, review the explanation, and test with sample strings."
+  },
+  {
+    "question": "Common regex mistakes (and how to avoid them)",
+    "answer": "Five common regex mistakes to avoid: unanchored patterns, greedy quantifiers, missing escapes, ignoring edge cases, and wrong flavor. Fix each by anchoring, scoping quantifiers, escaping metacharacters, listing edge cases, and selecting the right language flavor."
+  },
+  {
+    "question": "RegexProof vs. doing it manually",
+    "answer": "Hand-writing a regex is fine for a pattern you will read again next week; the cost shows up with unfamiliar formats, dialect differences, and patterns that reach a request path. RegexProof is faster at producing a first correct draft and at flagging catastrophic backtracking, but human review still wins on intent: only you can say whether an over-permissive match is acceptable for your data. Treat the output as a reviewed draft, not a signed-off artifact."
+  },
+  {
+    "question": "What is ReDoS and why should I care?",
+    "answer": "ReDoS is regular expression Denial of Service: a pattern that can match the same input in exponentially many ways lets a crafted non-matching string pin a CPU core before the engine gives up. Nested quantifiers over overlapping character classes are the usual cause. It matters because the input is attacker-controlled and the regex usually sits on a request path — cap input length before matching and add a match timeout."
+  },
+  {
+    "question": "Primary sources for regex and ReDoS semantics?",
+    "answer": "The OWASP community page on regular expression Denial of Service, and your runtime's own specification for the dialect you target — ECMA-262 for JavaScript, the Python re module docs, Go's regexp package, the PCRE documentation, and the Rust regex crate. Dialect differences are documented per runtime, not in one universal standard."
+  }
+] as { question: string; answer: string }[]
+
+const howToBlocks = [
+  {
+    "name": "How to build a regex in 10 minutes",
+    "steps": [
+      {
+        "name": "Describe what to match",
+        "text": "Write a plain-English description of the pattern, for example a US phone number like (415) 555-2671."
+      },
+      {
+        "name": "Pick your language flavor",
+        "text": "Select your language or flavor (JavaScript, Python, Go, PCRE, or Rust)."
+      },
+      {
+        "name": "Generate and test",
+        "text": "Generate the regex, review the part-by-part explanation and edge cases, then verify it against your test strings."
+      }
+    ]
+  }
+] as { name: string; steps: { name: string; text: string }[] }[]
+
+const posts = [
+  {
+    slug: 'redos-catastrophic-backtracking',
+    title: 'What is ReDoS: the regex failure mode that takes down production?',
+    type: 'Deep-dive · Article',
+    query: 'regex denial of service catastrophic backtracking',
+    body: 'Catastrophic backtracking happens when a pattern can match the same input in exponentially many ways, so a non-matching string of moderate length makes the engine explore a combinatorial space before it fails. Nested quantifiers over overlapping character classes are the usual cause. The tell is a pattern that behaves fine on your samples and hangs on adversarial input, which is exactly what an attacker sends. Practical containment: avoid nested quantifiers whose inner group can match the same characters as the outer, prefer possessive or atomic constructs where the dialect supports them, cap the input length before the regex ever runs, and add a match timeout on the call.',
+    refs: [
+      'https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS',
+      'https://www.pcre.org/current/doc/html/',
+      'https://docs.rs/regex/latest/regex/',
+    ],
+  },
+  {
+    slug: 'regex-dialect-differences',
+    title: 'What is The same regex behaves differently in JavaScript, Python, Go, PCRE, and Rust?',
+    type: 'Comparison · Article',
+    query: 'regex dialect differences javascript python go pcre rust',
+    body: 'A pattern that passes review in one runtime can silently mis-match in another. Lookarounds and backreferences are supported in ECMAScript, Python, and PCRE but not in Go\'s or Rust\'s default engines. Go and Rust also drop backtracking by design, which removes ReDoS as a class of bug but also removes constructs that depend on it. Unicode property escapes, named groups, and inline flags each landed in different versions. Named-group syntax alone differs: JavaScript and Python accept (?<name>...), while Python\'s older (?P<name>...) form does not port. Name the target dialect explicitly and re-test after any runtime migration.',
+    refs: [
+      'https://docs.rs/regex/latest/regex/',
+      'https://pkg.go.dev/regexp',
+      'https://docs.python.org/3/library/re.html',
+    ],
+  },
+  {
+    slug: 'anchor-and-scope-quantifiers',
+    title: 'What is Unanchored patterns and greedy quantifiers: the two silent over-matches?',
+    type: 'Definitional + examples · Article',
+    query: 'unanchored regex greedy quantifier mistakes',
+    body: 'An unanchored pattern reports success on a partial match, so validation written as if it were a full-format check quietly accepts anything that contains the format. A greedy quantifier then takes as much as it can and only gives back what the rest of the pattern forces it to, which is how a "match the whole line" intent ends up capturing half of it. Both failures are invisible on happy-path samples. Anchor with ^ and $ or \\A and \\z, prefer an explicitly bounded quantifier where the input length is known, and test with an input that is deliberately wrong in a way a partial match would accept.',
+    refs: [
+      'https://262.ecma-international.org/',
+      'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions',
+      'https://docs.python.org/3/library/re.html',
+    ],
+  },
+] as { slug: string; title: string; type: string; query: string; body: string; refs: string[] }[]
+
+const glance = [
+  { k: 'Input', v: 'Plain-English description of the pattern, or an existing regex to review' },
+  { k: 'Output', v: 'Working regex · part-by-part explanation · edge cases called out' },
+  { k: 'Dialects covered', v: 'JavaScript / ECMAScript · Python · Go · PCRE · Rust' },
+  { k: 'Review focus', v: 'ReDoS (catastrophic backtracking) and dialect pitfalls' },
+  { k: 'Method', v: 'Deterministic heuristics, plus optional model-assisted explanations' },
+  { k: 'Not a guarantee', v: 'Common patterns are caught; novel attacks may be missed' },
+]
+
+export default function Page() {
+  const NAME = "RegexProof";
+  return (
+    <>
+      <Head>
+        <link rel="canonical" href="https://regexproof.lxsaihub.com/blog" />
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(buildFaqJsonLd(faqs)) }}
+        />
+        {howToBlocks.map((block, i) => (
+          <script
+            key={`howto-${i}`}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(buildHowToJsonLd(block.name, block.steps)),
+            }}
+          />
+        ))}
+
+        {posts.map((p, i) => (
+          <script
+            key={`article-${i}`}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Article",
+                headline: p.title,
+                description: p.body,
+                inLanguage: "en",
+              }),
+            }}
+          />
+        ))}
+
+        <title>{NAME} — regex generation and ReDoS review</title>
+        <meta name="description" content="Guides on turning plain-English rules into working regular expressions: dialect differences across JavaScript, Python, Go, PCRE and Rust, plus ReDoS and catastrophic-backtracking containment." />
+      </Head>
+      <div className="min-h-screen bg-slate-50 text-slate-800">
+        <header className="border-b border-slate-200 bg-white">
+          <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" className="font-bold text-slate-900">{NAME}</a>
+            <nav className="hidden md:flex gap-6 text-sm font-semibold text-slate-500">
+              <a href="/use-cases" className="hover:text-slate-900">Use cases</a>
+              <a href="/integrations" className="hover:text-slate-900">Integrations</a>
+              <a href="/how-it-works" className="hover:text-slate-900">How it works</a>
+              <a href="/security" className="hover:text-slate-900">Security</a>
+              <a href="/blog" className="hover:text-slate-900">Blog</a>
+            </nav>
+          </div>
+        </header>
+        <main className="max-w-3xl mx-auto px-6 py-14">
+          <p className="mt-3 text-lg font-semibold text-slate-900" data-geo-short-lead="1">RegexProof reviews regular expressions for ReDoS and dialect pitfalls with deterministic heuristics plus optional…</p>
+<div className="text-xs font-bold tracking-widest uppercase text-indigo-600 mb-3">Blog · GEO</div>
+          <h1 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
+            Regular expressions, explained
+          </h1>
+          <p className="text-lg text-slate-600 mb-10">
+            Own the definitional queries developers ask before they put a regex on a request path.
+          </p>
+
+          <section className="rounded-xl border border-slate-200 bg-white p-6 mb-12">
+            <h2 className="text-lg font-bold text-slate-900 mb-4">What does {NAME} include at a glance?</h2>
+            <dl className="space-y-3 text-sm">
+              {glance.map((g) => (
+                <div key={g.k} className="flex flex-col sm:flex-row sm:justify-between gap-1 border-b border-slate-100 pb-2 last:border-0">
+                  <dt className="text-slate-500">{g.k}</dt>
+                  <dd className="font-semibold text-slate-900 sm:text-right sm:max-w-[62%]">{g.v}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          <div className="space-y-8">
+            {posts.map((p) => (
+              <article key={p.slug} className="border-b border-slate-200 pb-8">
+                <div className="text-xs font-semibold text-indigo-600 mb-1">{p.type}</div>
+                <h2 className="text-2xl font-bold mb-2 text-slate-900">{p.title}</h2>
+                <p className="text-sm text-slate-600 mb-2"><span className="font-semibold">Target query:</span> {p.query}</p>
+                <p className="text-slate-700 leading-relaxed">{p.body}</p>
+                <ul className="text-xs text-slate-400 mt-3 space-y-1">
+                  {p.refs.map((r) => (
+                    <li key={r}><a href={r} className="hover:text-slate-600 underline">{r}</a></li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+
+          <h2 className="text-2xl font-bold mt-14 mb-4 text-slate-900">What do people ask about {NAME}?</h2>
+          <div className="space-y-5">
+            {faqs.map((f, i) => (
+              <div key={i} className="border-b border-slate-200 pb-4">
+                <div className="font-semibold text-slate-900">{f.question}</div>
+                <p className="text-slate-700 mt-1 leading-relaxed">{f.answer}</p>
+              </div>
+            ))}
+          </div>
+
+          <h2 className="text-2xl font-bold mt-14 mb-4 text-slate-900">{howToBlocks[0].name}</h2>
+          <ol className="list-decimal pl-6 space-y-3 text-slate-700 leading-relaxed">
+            {howToBlocks[0].steps.map((s, i) => (
+              <li key={i}>
+                <span className="font-semibold text-slate-900">{s.name}.</span> {s.text}
+              </li>
+            ))}
+          </ol>
+
+          <p className="text-xs text-slate-400 mt-10">
+            Scope: {NAME} reviews patterns with deterministic heuristics plus optional model-assisted
+            explanations, and suggests safer alternatives for you to decide on. It does not guarantee
+            completeness — verify against the OWASP ReDoS guidance and your runtime&apos;s regex semantics.
+          </p>
+        </main>
+        <footer className="border-t border-slate-200 bg-white">
+          <div className="max-w-5xl mx-auto px-6 py-8 text-sm text-slate-500 flex flex-wrap gap-6">
+            <a href="/security" className="hover:text-slate-900">Security</a>
+            <a href="/use-cases" className="hover:text-slate-900">Use cases</a>
+            <a href="/integrations" className="hover:text-slate-900">Integrations</a>
+            <a href="/how-it-works" className="hover:text-slate-900">How it works</a>
+            <a href="/blog" className="hover:text-slate-900">Blog</a>
+          </div>
+        </footer>
+      </div>
+    </>
+  )
+}

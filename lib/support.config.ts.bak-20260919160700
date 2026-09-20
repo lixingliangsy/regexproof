@@ -1,0 +1,26 @@
+/**
+ * lib/support.config.ts —— RegexProof 的 SupportConfig 实例
+ *
+ * 与 AIActRadar / GotoDeck 共享同一份 support-kit（含 lib/agent/* / lib/feedback* / components/ChatWidget /
+ * pages/api/chat / pages/embed/chat），差异仅在产品级参数与 KB。
+ *
+ * 接入清单：
+ * 1. KB：lib/agent/kb.ts（领域知识）
+ * 2. config：lib/support.config.ts（本文件）
+ * 3. /api/chat 传入 config: SUPPORT
+ * 4. /api/feedback / /feedback 页面如使用，自动从 SUPPORT 派生主题前缀
+ * 5. _app.tsx 与 /embed/chat 传入 SUPPORT.productName / brandColor / productSlug
+ */
+
+import { KB } from "./agent/kb";
+import type { SupportConfig } from "./support-kit/types";
+
+export const SUPPORT: SupportConfig = {
+  productSlug: "regexproof",
+  productName: "RegexProof",
+  feedbackEmail: process.env.FEEDBACK_TO_EMAIL || "lixingliangsy@163.com",
+  kb: KB,
+  chatHost: process.env.APP_URL || "https://regexproof.example.com",
+  brandColor: "#7C3AED",
+  complianceDisclaimer: "RegexProof 是正则表达式生成工具，不构成法律或专业意见；涉及合规话题请咨询合格顾问。",
+};

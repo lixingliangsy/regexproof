@@ -1,0 +1,47 @@
+{
+  "version": "regexforge-rfc@2026-07-24",
+  "standard": "Canonical pattern library — IETF RFCs + regular-expressions.info",
+  "source": "IETF RFC 5322 / RFC 3986 / RFC 3696 and regular-expressions.info (authoritative regex reference)",
+  "entries": [
+    {
+      "id": "rfc5322-email",
+      "ref": "https://www.rfc-editor.org/rfc/rfc5322",
+      "title": "Email address syntax (RFC 5322 addr-spec)",
+      "body": "RFC 5322 defines the Internet message format and the addr-spec grammar for email addresses: a local-part (dot-atom or quoted-string, may contain comments in parentheses and quoted display names) and a domain (dot-atom or domain-literal). The grammar is famously complex — nested comments, quoted strings with spaces, and obsolete syntax all legal. Most internet 'email validation' regexes are wrong: they reject addresses RFC 5322 accepts and accept addresses it rejects. The correct approach is to use a library implementing the ABNF (e.g. Python email.utils, the Mail gem) rather than a hand-rolled pattern.",
+      "tags": ["email", "rfc5322", "validation", "addr-spec"],
+      "verify": true
+    },
+    {
+      "id": "rfc3986-uri",
+      "ref": "https://www.rfc-editor.org/rfc/rfc3986",
+      "title": "URI generic syntax (RFC 3986)",
+      "body": "RFC 3986 specifies the generic URI syntax: scheme://authority/path?query#fragment, with a precise ABNF for each component (scheme, userinfo, host, port, path, query, fragment). Host may be IPv4, IPv6 (in brackets), or reg-name; percent-encoding applies to reserved characters. A regex that 'validates a URL' must account for IPv6 literals, optional userinfo, and the difference between absolute and relative references. Over-broad patterns (e.g. catch-all http.*) produce false positives; the official ABNF is the source of truth.",
+      "tags": ["uri", "url", "rfc3986", "validation"],
+      "verify": true
+    },
+    {
+      "id": "rfc3696-email-advice",
+      "ref": "https://www.rfc-editor.org/rfc/rfc3696",
+      "title": "Email address verification guidance (RFC 3696)",
+      "body": "RFC 3696 (Klensin & Murchison) explicitly advises that the only reliable way to verify an email address is to send it a message and see if it bounces — syntactic checks catch only gross errors. It documents the common bugs in naïve validators: mishandling of quoted strings, the 'first and last character must not be a dot' rule for the local part, and the 254-octet maximum length (5321) / 256 limit. A regex can only be a first-pass filter, never a correctness guarantee.",
+      "tags": ["email", "rfc3696", "verification", "best-practice"],
+      "verify": true
+    },
+    {
+      "id": "rfc5322-quoted-local",
+      "ref": "https://www.rfc-editor.org/rfc/rfc5322",
+      "title": "Quoted-string and obsolete local-parts (RFC 5322 edge cases)",
+      "body": "RFC 5322 permits the local-part to be a quoted-string containing spaces and most ASCII specials (e.g. \"John Doe\"@example.com). Obsolete syntax allows CFWS between the dots of a dot-atom and null elements in address lists. Real-world MTAs vary in what they accept, so a 'strict' validator that forbids quotes and spaces will reject perfectly valid, deliverable addresses. Match against the deployed server's actual acceptance, not an idealized grammar.",
+      "tags": ["email", "rfc5322", "quoted-string", "edge-case"],
+      "verify": true
+    },
+    {
+      "id": "email-regex-practical",
+      "ref": "https://www.regular-expressions.info/email.html",
+      "title": "Practical email regex and its hard limits (regular-expressions.info)",
+      "body": "regular-expressions.info documents the well-known pragmatic pattern \\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b which catches the vast majority of real addresses while deliberately NOT implementing the full RFC 5322 grammar. The site is explicit that no regex can fully validate an email, and that such a pattern both rejects some valid addresses and accepts some invalid ones. Use it as a UI affordance, not an authority.",
+      "tags": ["email", "regex", "regular-expressions.info", "pragmatic"],
+      "verify": true
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+# RegexProof — Feature pillars
+
+## Core engine
+- NL description to regex
+
+## Workflow & output
+- Pick your language flavor
+
+## Trust & control
+- Part-by-part explanation
+- Edge cases called out
+

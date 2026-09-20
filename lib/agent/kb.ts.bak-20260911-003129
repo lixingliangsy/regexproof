@@ -1,0 +1,190 @@
+/**
+ * lib/agent/kb.ts —— RegexForge 产品知识库（AI 客服智能体检索源）
+ *
+ * 同样采用「关键词 + 中文二元组」轻量检索（与 AIActRadar / GStack 同型，便于跨产品对照）。
+ *
+ * 红线（沿用 AIActRadar M11）：
+ * - 客服应答必须引用 KB 出处；合规类条目须打 tag，由 guardrails 在答案上附加「仅供参考」声明。
+ */
+
+import type { KbEntry } from "../support-kit/types";
+export type { KbEntry };
+
+export const KB: KbEntry[] = [
+  {
+    id: "overview",
+    title: "RegexForge 是什么",
+    keywords: ["是什么", "介绍", "regexforge", "regex forge", "正则", "产品", "做什么"],
+    body:
+      "RegexForge 是一个 AI 正则表达式生成器：你用自然语言描述要匹配的模式（如「美国电话号码」「邮箱地址」「URL」），选择目标编程语言 flavor（JavaScript / Python / Go / PCRE / Rust），工具会生成正确的正则表达式、逐段解释每一部分的含义，并列出你需要注意的边界情况。",
+    source: "产品文档 / 官网",
+    tags: [],
+  },
+  {
+    id: "how-to-use",
+    title: "如何使用 RegexForge",
+    keywords: ["使用", "怎么用", "步骤", "方法", "如何", "操作", "流程"],
+    body:
+      "三步使用：① 在描述框里用自然语言说明你要匹配的内容（例如「匹配美国电话号码，支持 (415) 555-2671 和 415-555-2671 两种格式」）；② 选择目标编程语言（JavaScript / Python / Go / PCRE / Rust）；③ 可选：提供测试字符串（标注哪些应匹配、哪些不应匹配）。点击「Forge regex」即可生成。",
+    source: "产品文档 / 上手指南",
+    tags: [],
+  },
+  {
+    id: "language-flavors",
+    title: "支持的编程语言 flavor",
+    keywords: ["语言", "flavor", "javascript", "python", "go", "pcre", "rust", "正则引擎"],
+    body:
+      "RegexForge 支持五种正则表达式 flavor：① JavaScript — ECMAScript 标准，用于浏览器/Node.js；② Python — re 模块语法；③ Go — RE2 引擎（不支持回溯引用等高级特性）；④ PCRE — Perl 兼容正则，功能最全；⑤ Rust — regex crate 语法。不同 flavor 支持的语法不同（如 Lookbehind 某些引擎不支持），工具会根据所选 flavor 生成兼容的表达式。",
+    source: "产品文档 / 语言支持",
+    tags: [],
+  },
+  {
+    id: "pricing",
+    title: "RegexForge 定价：Free / Pro",
+    keywords: ["定价", "价格", "多少钱", "收费", "免费", "pro", "套餐", "档位", "订阅"],
+    body:
+      "两档：① Free（$0，每月 10 次生成）；② Pro（$19/月 或 $190/年，无限次数、保存历史记录）。Pro 版支持 BYOK（Bring Your Own Key），可接入自己的 LLM API。年付相比月付约省 17%。",
+    source: "官网定价页",
+    tags: [],
+  },
+  {
+    id: "byok",
+    title: "BYOK（Bring Your Own Key）说明",
+    keywords: ["byok", "api key", "自定义", "密钥", "own key", "bring your own"],
+    body:
+      "Pro 用户可以在 Settings 页面配置自己的 LLM API Key。开启 BYOK 后，你的密钥仅存储在本地浏览器中，服务端不保留。这意味着请求直接从你的账户扣除 token 用量。支持兼容 OpenAI 协议的任何提供商。",
+    source: "产品文档 / BYOK",
+    tags: [],
+  },
+  {
+    id: "ai-support-scope",
+    title: "AI 客服能做什么 / 不能做什么",
+    keywords: ["客服", "机器人", "ai 客服", "智能体", "能回答", "边界", "限制", "支持"],
+    body:
+      "我是 RegexForge 的 AI 客服助手，基于产品知识库回答关于产品功能、支持的语言、定价、账户、BYOK 配置与工具使用的常见问题，并在需要时为你转接人工。我无法处理支付、修改账户或访问你的凭证。涉及具体正则技术细节时，我可以给出通用建议，但最终正确性请在目标引擎中实际测试验证。",
+    source: "产品文档 / AI 客服",
+    tags: [],
+  },
+  {
+    id: "account-login",
+    title: "登录 / 账户问题",
+    keywords: ["登录", "登入", "账号", "账户", "注册", "密码", "忘记密码", "无法登录"],
+    body:
+      "账户使用邮箱登录。订阅管理、密码重置和账单问题请通过「转人工」或反馈页提交，团队会协助核实身份后处理。出于安全考虑，我们不会在聊天中直接索要或重置密码。",
+    source: "产品文档 / 账户",
+    tags: [],
+  },
+  {
+    id: "refund",
+    title: "退款政策",
+    keywords: ["退款", "退费", "refund", "取消", "订阅", "退款政策"],
+    body:
+      "我们提供 14 天无理由退款保证。如果在购买后 14 天内对服务不满意，请通过反馈页或联系人工客服申请退款。超过 14 天的订阅期，我们会按比例处理未使用的时间。年付用户在首 30 天内可申请全额退款。",
+    source: "产品文档 / 退款政策",
+    tags: [],
+  },
+  {
+    id: "privacy-security",
+    title: "隐私与安全",
+    keywords: ["隐私", "安全", "数据", "加密", "privacy", "security", "GDPR"],
+    body:
+      "RegexForge 重视你的隐私：① 我们不存储你生成的正则表达式历史（除非你主动保存并登录）；② BYOK 模式下你的 API Key 仅存储在浏览器本地；③ 所有通信通过 TLS 加密；④ 我们不将你的输入内容用于训练。详细信息请查看隐私政策。",
+    source: "产品文档 / 安全与隐私",
+    tags: ["compliance"],
+  },
+  {
+    id: "compliance-disclaimer",
+    title: "合规答复的免责声明",
+    keywords: ["法律", "意见", "保证", "合规认证", "免责", "顾问", "责任", "GDPR"],
+    body:
+      "RegexForge 提供的是正则表达式生成工具，不涉及合规认证、法律意见或税务建议。关于数据隐私（GDPR 等）话题，我们提供的是产品信息，不构成专业意见。正式决策前请咨询合格顾问。",
+    source: "产品文档 / 免责声明",
+    tags: ["compliance"],
+  },
+  {
+    id: "contact-human",
+    title: "联系我们 / 转人工",
+    keywords: ["联系", "人工", "转人工", "投诉", "退款", "维权", "销售", "真人", "客服电话", "找人"],
+    body:
+      "需要人工协助（账户异常、退款、商务合作或技术咨询）请告诉我「转人工」并留下邮箱；也可在反馈页（/feedback）提交详细诉求。我们通常在 24 小时内回复。",
+    source: "产品文档 / 支持",
+    tags: [],
+  },
+  {
+    id: "regex-best-practices",
+    title: "正则表达式最佳实践",
+    keywords: ["最佳实践", "优化", "性能", "可维护", "best practice", "建议"],
+    body:
+      "生成正则表达式后建议：① 始终用实际测试数据验证（工具提供了测试字符串输入框）；② 注意所选 flavor 的特殊语法（如 Go 不支持 Lookbehind）；③ 为复杂模式添加注释（PCRE 支持 `(?#...)` 或在代码中用 `(?x)` 开启自由格式）；④ 警惕灾难性回溯（catastrophic backtracking），避免嵌套量词。",
+    source: "产品文档 / 使用建议",
+    tags: [],
+  },
+  {
+    id: "supported-patterns",
+    title: "常见模式示例",
+    keywords: ["示例", "例子", "example", "email", "url", "phone", "ip", "日期"],
+    body:
+      "RegexForge 可以生成的常见模式包括：邮箱地址、URL/域名、电话号码（各国格式）、IP 地址、日期格式（ISO 8601 / US / EU）、身份证号、邮政编码、信用卡号、HTML 标签提取等。只需用自然语言描述，例如「匹配 ISO 8601 格式的日期时间字符串」即可。",
+    source: "产品文档 / 功能",
+    tags: [],
+  },
+  {
+    id: "api-access",
+    title: "是否有 API",
+    keywords: ["api", "接口", "开发", "集成", "integration", "sdk"],
+    body:
+      "目前 RegexForge 以 Web 应用形式提供服务。如果你的业务需要 API 接入或批量生成，请通过「转人工」联系商务团队，我们可以讨论定制方案或 API 接入计划。",
+    source: "产品文档 / 集成",
+    tags: [],
+  },
+];
+
+// --- 轻量检索：与 AIActRadar / GStack 一致的实现，便于跨产品复用 ---
+function normalize(s: string): string {
+  return (s || "").toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ");
+}
+function toWords(s: string): string[] {
+  return normalize(s).split(/\s+/).map((w) => w.trim()).filter(Boolean);
+}
+function cjkBigrams(s: string): string[] {
+  const grams: string[] = [];
+  for (const w of toWords(s)) {
+    if (/[\u4e00-\u9fff]/.test(w) && w.length >= 2) {
+      for (let i = 0; i < w.length - 1; i++) grams.push(w.slice(i, i + 2));
+    }
+  }
+  return grams;
+}
+function scoreEntry(entry: KbEntry, query: string): number {
+  const q = normalize(query);
+  const qWords = new Set(toWords(q));
+  const qGrams = new Set(cjkBigrams(q));
+  let score = 0;
+  for (const kw of entry.keywords) {
+    const k = kw.toLowerCase();
+    if (q.includes(k)) score += 3;
+  }
+  for (const tw of toWords(entry.title)) {
+    if (qWords.has(tw)) score += 2;
+  }
+  const idx = normalize((entry.keywords.join(" ") + " " + entry.title + " " + entry.body.slice(0, 400)));
+  for (const g of qGrams) if (idx.includes(g)) score += 0.5;
+  return score;
+}
+
+export interface RetrieveResult {
+  entries: KbEntry[];
+  topScore: number;
+}
+
+export function retrieve(query: string, topK = 4, entries: KbEntry[] = KB): RetrieveResult {
+  const scored = entries.map((e) => ({ e, s: scoreEntry(e, query) }))
+    .filter((x) => x.s > 0)
+    .sort((a, b) => b.s - a.s)
+    .slice(0, topK);
+  return { entries: scored.map((x) => x.e), topScore: scored.length ? scored[0].s : 0 };
+}
+
+export function isComplianceRelated(entries: KbEntry[]): boolean {
+  return entries.some((e) => e.tags.includes("compliance"));
+}

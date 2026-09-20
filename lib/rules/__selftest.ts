@@ -1,0 +1,55 @@
+// lib/rules/__selftest.ts — deterministic self-test for RegexProof regex rules.
+// Run: tsx lib/rules/__selftest.ts
+import { runRegexChecks, RULESET_VERSION, HONESTY_NOTE, RegexFlavor } from './regex'
+
+let passed = 0
+let failed = 0
+function assert(name: string, cond: boolean) {
+  if (cond) {
+    passed++
+    console.log('  ok  -', name)
+  } else {
+    failed++
+    console.error('  FAIL -', name)
+  }
+}
+
+// 1. ruleset carries version + honesty note
+assert('RULESET_VERSION is date-stamped', /^\d{4}-\d{2}-\d{2}$/.test(RULESET_VERSION) || /^regexforge@\d{4}-\d{2}-\d{2}$/.test(RULESET_VERSION))
+assert('honesty note present', typeof HONESTY_NOTE === 'string' && HONESTY_NOTE.length > 0)
+
+// 2. ReDoS nested quantifier on a repeated group flagged high severity
+const redos = runRegexChecks({ pattern: '(a)+b)+', flavor: 'JavaScript' as RegexFlavor })
+assert('ReDoS nested quantifier flagged', redos.hits.some((h) => h.id === 'REGEX-REDOS-01' && h.severity === 'high'))
+assert('ReDoS finding carries remediation', !!redos.hits.find((h) => h.id === 'REGEX-REDOS-01')?.remediation)
+
+// 3. overlapping alternation inside repeated group flagged
+const redos2 = runRegexChecks({ pattern: '(a|b)+c)+', flavor: 'PCRE' as RegexFlavor })
+assert('ReDoS overlapping alternation flagged', redos2.hits.some((h) => h.id === 'REGEX-REDOS-02'))
+
+// 4. unanchored pattern warns
+const unanchored = runRegexChecks({ pattern: 'abc', flavor: 'JavaScript' as RegexFlavor })
+assert('unanchored pattern warns', unanchored.hits.some((h) => h.id === 'REGEX-ANCHOR-01'))
+
+// 5. anchored pattern does NOT warn
+const anchored = runRegexChecks({ pattern: '^abc$', flavor: 'JavaScript' as RegexFlavor })
+assert('anchored pattern not flagged as unanchored', !anchored.hits.some((h) => h.id === 'REGEX-ANCHOR-01'))
+
+// 6. undefined backreference flagged
+const backref = runRegexChecks({ pattern: '(foo)\\2', flavor: 'JavaScript' as RegexFlavor })
+assert('undefined backreference flagged', backref.hits.some((h) => h.id === 'REGEX-BACKREF-01'))
+
+// 7. clean, valid pattern produces no hits
+const clean = runRegexChecks({ pattern: '^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$', flavor: 'JavaScript' as RegexFlavor })
+assert('clean email pattern produces no hits', clean.hits.length === 0)
+
+// 8. dialect notes returned for known flavor
+assert('dialect notes present for Go', runRegexChecks({ pattern: 'x', flavor: 'Go' as RegexFlavor }).dialectNotes.length > 0)
+
+console.log(`\nregexforge rules selftest: ${passed} passed, ${failed} failed`)
+try {
+  const fs = require('fs')
+  fs.mkdirSync('.data', { recursive: true })
+  try { fs.writeFileSync('.data/selftest-result.json', JSON.stringify({ passed, failed, ok: failed === 0, product: 'regexforge' })) } catch (e) { /* read-only FS (serverless): best effort */ }
+} catch {}
+if (failed > 0) process.exit(1)

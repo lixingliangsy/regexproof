@@ -1,0 +1,8 @@
+# RegexProof — Pricing
+
+## Free — $0
+10 forges/mo
+
+## Pro — $19/mo
+Unlimited, save history
+

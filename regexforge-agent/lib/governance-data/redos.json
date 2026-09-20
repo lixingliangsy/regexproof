@@ -1,0 +1,47 @@
+{
+  "version": "regexforge-redos@2026-07-24",
+  "standard": "ReDoS vulnerability patterns & mitigations",
+  "source": "OWASP, Cloudflare post-mortem, and regular-expressions.info",
+  "entries": [
+    {
+      "id": "redos-evil-regex",
+      "ref": "https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS",
+      "title": "Evil regex shapes (OWASP ReDoS)",
+      "body": "OWASP defines an 'Evil Regex' as one containing: a grouping with repetition, inside which there is (a) repetition or (b) alternation with overlap. Canonical examples: (a+)+, ([a-zA-Z]+)*, (a|aa)+, (a|a?)+, (.*a){20}. Against crafted input (a long run of the repeated char followed by a non-matching char, e.g. 'aaaaaaaaaaaaaaaaaa!'), the backtracking engine tries an exponential number of ways to partition the string before failing. A single such pattern on a hot path is a denial-of-service primitive.",
+      "tags": ["redos", "owasp", "evil-regex", "catastrophic-backtracking"],
+      "verify": true
+    },
+    {
+      "id": "redos-catastrophic",
+      "ref": "https://www.regular-expressions.info/catastrophic.html",
+      "title": "Catastrophic backtracking explained (regular-expressions.info)",
+      "body": "regular-expressions.info explains that backtracking engines explore every path through the NFA before declaring failure. When a repeated group is itself repeatable, or an alternation's branches overlap, the number of paths grows exponentially with input length, turning a 30-char string into billions of steps. The fix is to give the engine a single way to match each character: rewrite (a+)+ as a+ with surrounding anchors, or use atomic groups/possessive quantifiers where the engine supports them.",
+      "tags": ["redos", "catastrophic-backtracking", "regular-expressions.info", "mitigation"],
+      "verify": true
+    },
+    {
+      "id": "redos-cloudflare-2019",
+      "ref": "https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/",
+      "title": "Cloudflare 27-minute global outage (2019-07-02)",
+      "body": "Cloudflare's WAF shipped a managed rule whose regex contained catastrophic backtracking (the sub-pattern .*?=?.* effectively). Against request bodies without the expected delimiter, PCRE backtracked on every HTTP request across every edge server, pinning all CPU cores to 100% and taking a large fraction of the internet down for 27 minutes. The post-mortem identifies the backtracking regex as the root cause — the canonical proof that ReDoS is a systemic, not app-level, risk.",
+      "tags": ["redos", "cloudflare", "outage", "waf", "case-study"],
+      "verify": true
+    },
+    {
+      "id": "redos-mitigation-linear",
+      "ref": "https://github.com/google/re2",
+      "title": "Linear-time engines as the primary mitigation (RE2 / Rust regex)",
+      "body": "The most robust ReDoS defense is to run untrusted input through a non-backtracking engine: Google RE2 (C++), Go's regexp (RE2-backed), or the Rust `regex` crate. These compile to DFAs/NFAs that guarantee linear time and cannot be made to exponential-blow up, regardless of pattern shape. Where a backtracking engine is mandatory (JS/Python/PCRE), combine it with input-length bounds, atomic groups, and a match timeout.",
+      "tags": ["redos", "mitigation", "re2", "linear-time", "defense"],
+      "verify": true
+    },
+    {
+      "id": "redos-mitigation-atomic",
+      "ref": "https://www.regular-expressions.info/atomic.html",
+      "title": "Atomic groups & possessive quantifiers (backtracking-engine mitigation)",
+      "body": "On PCRE/Java/.NET you can prevent backtracking into a sub-expression with atomic groups (?>...) or possessive quantifiers (a*+, a++), which 'lock in' a match once made. This neutralizes the ambiguous partition paths that cause catastrophic backtracking. JavaScript and Python `re` do NOT support these, so for those engines prefer pattern rewrites (single match path) plus a hard input-length cap as defense in depth.",
+      "tags": ["redos", "mitigation", "atomic-group", "possessive", "pcre"],
+      "verify": true
+    }
+  ]
+}
