@@ -9,12 +9,16 @@ export default function FeedbackPage() {
         <title>Feedback · RegexProof</title>
         <meta name="description" content="Submit feedback, suggestions, or issues to RegexProof" />
       </Head>
-      <div className="mx-auto w-full max-w-2xl px-4 py-10">
-        <h1 className="text-2xl font-bold text-slate-900">Submit Feedback</h1>
-        <p className="mt-2 text-slate-600">Your feedback goes directly to our team and helps us improve the product.</p>
-        <div className="mt-6">
-          <FeedbackForm />
+
+      <div className="bg-blue-600 py-10">
+        <div className="mx-auto max-w-2xl px-4 text-center">
+          <h1 className="text-3xl font-bold text-white">Feedback</h1>
+          <p className="mt-2 text-blue-100">Help us improve RegexProof. Choose the type that fits best.</p>
         </div>
+      </div>
+
+      <div className="mx-auto w-full max-w-2xl px-4 py-8">
+        <FeedbackForm />
       </div>
     </Layout>
   );

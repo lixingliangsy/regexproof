@@ -1,0 +1,134 @@
+{
+  "title": "ECMAScript vs PCRE dialect traps",
+  "eyebrow": "by RegexProof (LX AI)",
+  "lead": "Lookbehind support, Unicode modes, and recursive patterns differ across engines. A pattern that compiles in PCRE can throw or match differently in JavaScript. Always validate against the production dialect in the same flags and Unicode mode you will ship — a paste-bin tester on another engine is not enough.",
+  "sections": [
+    {
+      "h2": "Why dialect traps show up in real apps",
+      "paras": [
+        "Most teams learn one flavor well and paste patterns across stacks. A backend that uses PCRE-style features (recursive subpatterns, certain lookbehind forms, possessive quantifiers) will happily accept a pattern that the browser cannot even parse. The reverse also happens: a JavaScript u-flag Unicode pattern behaves differently when someone ports it to a byte-oriented PCRE build without the same Unicode properties.",
+        "I treat dialect as part of the contract, the same way I treat SQL dialect. If the runtime is ECMAScript RegExp, the source of truth is the ECMA-262 RegExp section. If the runtime is PCRE, the source of truth is the PCRE documentation. Testers that silently switch engines hide the bug until production.",
+        "Where the mismatch usually enters",
+        "- Shared “validation library” snippets copied from Stack Overflow without an engine tag\n\n- CI that runs Python re while the edge gateway runs JavaScript\n\n- WAF or log parsers using PCRE while the app form uses ECMAScript\n\n- LLM-generated regex that defaults to PCRE-ish syntax unless you pin the flavor"
+      ]
+    },
+    {
+      "h2": "Lookbehind and lookaround differences",
+      "paras": [
+        "Variable-length lookbehind is a classic trap. Engines disagree about what lengths are legal, and some older JavaScript engines lacked lookbehind entirely. Even when both sides support lookbehind, the set of allowed patterns inside the assertion can differ. If your gate depends on “previous token must be X,” write a unit test in the production engine, not in a PCRE playground.",
+        "Lookahead is more widely shared, but combining lookaround with nested quantifiers raises ReDoS risk. Dialect safety and denial-of-service safety are separate checks; pass one and you can still fail the other. OWASP’s ReDoS notes remain the practical checklist for the second check (OWASP ReDoS).",
+        "Practical rule",
+        "If a feature is not in ECMA-262 RegExp, do not ship it to the browser. If you need PCRE-only features, keep that pattern on the PCRE side and return a boolean or normalized token to JavaScript instead of shipping the raw pattern."
+      ]
+    },
+    {
+      "h2": "Unicode modes and character classes",
+      "paras": [
+        "Unicode property escapes, astral plane characters, and case folding depend on flags and engine Unicode tables. A pattern written with the JavaScript u flag is not the same object as a PCRE pattern with UTF mode enabled under different options. Dot-all / single-line behavior also differs in naming and defaults across flavors.",
+        "When I review generated patterns, I ask three questions: which code points must match, which must not, and whether the pattern assumes BMP-only text. Email, emoji, and CJK input are where silent mismatches appear.",
+        "Checklist — Unicode",
+        "- Record the exact flags used in production (i, m, s/dotAll, u, v where available)\n\n- Include at least one astral-plane fixture if user text can contain emoji\n\n- Avoid assuming \\w means “letters in every language”\n\n- Prefer explicit ranges or property escapes you have verified in-engine"
+      ]
+    },
+    {
+      "h2": "Recursion, backreferences, and “helpful” PCRE features",
+      "paras": [
+        "Recursive patterns and some subroutine calls are PCRE strengths. ECMAScript RegExp does not give you the same toolkit. Generators that emit balanced-delimiter patterns with recursion will fail when the consumer is JavaScript. Atomic groups and possessive quantifiers are another PCRE-side comfort that JavaScript lacks in the same form.",
+        "Backreference behavior around failed groups and empty matches can also surprise people moving patterns between engines. The failure mode is rarely a crash; it is a silent wrong accept or reject on edge inputs.",
+        "Feature | ECMAScript RegExp | PCRE (typical) | Ship rule\nVariable-length lookbehind | Limited / engine-version dependent | Broader support | Test in target engine\nRecursive subpatterns | Not available | Available | Keep server-side only\nPossessive / atomic | Not the same toolkit | Available | Do not paste into JS\nUnicode property escapes | With u/v | With UTF + options | Match flags explicitly\nNamed groups | Supported in modern engines | Supported | Still verify replace syntax"
+      ]
+    },
+    {
+      "h2": "Step-by-step workflow I use before shipping a pattern",
+      "paras": [
+        "- Write the acceptance examples and rejection examples first (five each is enough to start).\n\n- Pin the engine and flags in the ticket title (example: “ECMAScript, flags u + i”).\n\n- Generate or author the pattern for that engine only.\n\n- Run the fixtures in the same runtime the user hits (browser build or Node version you deploy).\n\n- Scan for nested quantifiers and overlapping alternation (ReDoS pass).\n\n- Only then paste into a second engine if you truly need dual runtime — expect edits.",
+        "RegexProof is built to keep the flavor choice explicit and to explain groups before you paste. It does not replace running fixtures in your staging binary."
+      ]
+    },
+    {
+      "h2": "Common mistakes",
+      "paras": [
+        "- Trusting a green test on regex101 with the wrong flavor selected\n\n- Sharing one pattern across WAF (PCRE) and frontend (ECMAScript) without dual fixtures\n\n- Letting an LLM emit lookbehind or recursion without stating the engine\n\n- Treating “it compiled” as “it matches what we mean”\n\n- Skipping ReDoS review because the pattern is “only for validation”"
+      ]
+    },
+    {
+      "h2": "Decision criteria: one engine or two",
+      "paras": [
+        "Stay on one engine when the pattern gates user input in a single tier. Split engines only when you have two owners, two fixture files, and a documented mapping. Dual-engine “share the same string” is how dialect traps become incidents."
+      ]
+    },
+    {
+      "h2": "What this is NOT",
+      "paras": [
+        "This article is not a full comparison of every regex flavor, not a guarantee that RegexProof (or any tool) catches every dialect bug, and not a claim that passing fixtures means the pattern is safe under adversarial load. We do not invent customer metrics. Use it as an operator checklist; keep ECMA-262 and PCRE docs open when you argue about edge cases."
+      ]
+    },
+    {
+      "h2": "How I map a ticket to an engine contract",
+      "paras": [
+        "Every regex ticket should name the runtime the way we name a database: “Node 20 ECMAScript RegExp, flags u+i” or “gateway PCRE2 UTF, no recursion.” Without that line, reviewers argue about taste instead of contracts. I paste the engine line into the PR description and into the fixture file header so CI and humans share one story.",
+        "When product asks for “the same rule in the browser and on the edge,” I split the work into two patterns with two fixture files. Shared intent is fine; shared unverified strings are not. The cost of maintaining two small patterns is lower than the cost of one dialect incident on a login or checkout field.",
+        "Template for the PR description",
+        "- Engine + version + flags\n\n- Five accept fixtures and five reject fixtures (raw strings, not paraphrases)\n\n- Max input length enforced before the matcher runs\n\n- ReDoS note: nested quantifiers reviewed yes/no\n\n- Owner for residual risk if the pattern must stay complex"
+      ]
+    },
+    {
+      "h2": "LLM-generated regex: pin the flavor in the prompt",
+      "paras": [
+        "If you ask a model for “a regex for emails” without naming ECMAScript or PCRE, you often get a PCRE-flavored answer with lookbehind or possessive habits. RegexProof forces a flavor choice for that reason. Still run the fixtures in your binary; a clean explanation is not a green CI job.",
+        "I also ban cross-pasting from chat logs into production without a second human who can explain each group. The failure mode is not dramatic syntax errors — it is quiet wrong accepts on Unicode edge cases weeks later."
+      ]
+    },
+    {
+      "h2": "Operator notes from shipping micro-SaaS forms",
+      "paras": [
+        "Public forms attract weird Unicode, zero-width characters, and paste jobs from office suites. Dialect traps show up as “works on my laptop” because the laptop tester used a different engine than the edge node. Keep one staging host that mirrors production regex flags exactly.",
+        "When a customer reports a false reject, ask for the exact code points (a hex dump of the string) before you “fix” the pattern. Many dialect bugs are invisible in screenshots."
+      ]
+    },
+    {
+      "h2": "Closing",
+      "paras": [
+        "Pin the dialect, write fixtures in that dialect, then worry about elegance. The expensive bug is the pattern that works in the wrong tester. Keep the production engine honest, and treat cross-engine paste as a porting task with its own review."
+      ]
+    },
+    {
+      "h2": "References",
+      "paras": [
+        "- ECMA-262 RegExp\n\n- PCRE\n\n- OWASP ReDoS",
+        "Try the product: RegexProof",
+        "2026-09-16 · primary sources only · no fabricated traffic metrics"
+      ]
+    },
+    {
+      "h2": "Related reads",
+      "paras": [
+        "- redos-heuristics-for-application-regex-2026\n\n    - The LX AI Micro-SaaS Topic Matrix"
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "What is RegexProof?",
+      "a": "RegexProof converts a natural-language description into a regex for the engine you choose, then explains it part by part and flags edge cases."
+    },
+    {
+      "q": "Which regex flavors does RegexProof support?",
+      "a": "You choose the flavor — ECMAScript/JavaScript, PCRE, and others — and should validate against the production dialect, not only a paste-bin tester."
+    },
+    {
+      "q": "How does RegexProof reduce ReDoS risk?",
+      "a": "It explains repetition and alternation and calls out patterns prone to catastrophic backtracking, the root cause of ReDoS (Regular-expression Denial of Service)."
+    },
+    {
+      "q": "Is RegexProof free?",
+      "a": "The Free tier includes 10 forges per month; Pro is $19/mo for higher volume."
+    },
+    {
+      "q": "Why do ECMAScript and PCRE behave differently?",
+      "a": "Lookbehind support, Unicode modes, and recursive patterns differ across engines, so a pattern valid in PCRE can fail or act differently in JavaScript."
+    }
+  ],
+  "disclaimer": "Decision-support only. Not a formal verifier or completeness guarantee.",
+  "back": "Back to blog"
+}

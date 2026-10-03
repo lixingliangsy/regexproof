@@ -1,0 +1,141 @@
+{
+  "title": "ReDoS heuristics for application regex",
+  "eyebrow": "by RegexProof (LX AI)",
+  "lead": "Nested quantifiers like (a+)+ and overlapping alternations are classic ReDoS shapes. When user input is untrusted, prefer engines or constructs that bound backtracking, and fail closed on patterns you cannot explain. OWASP documents the attack class; your job is to keep those shapes out of request paths.",
+  "sections": [
+    {
+      "h2": "What ReDoS is in application terms",
+      "paras": [
+        "Regular-expression Denial of Service happens when a crafted input forces the matcher into catastrophic backtracking. CPU spikes, request latency explodes, and a single endpoint can starve the process. This is not theoretical trivia: any regex on an HTTP boundary, log line, or upload name is a candidate if it uses risky repetition.",
+        "I start from the OWASP ReDoS page and then map it to our routes (OWASP ReDoS). The heuristic pass is intentionally boring: find nested quantifiers, overlapping alternation, and ambiguous repetition on large input fields.",
+        "Where it bites first",
+        "- Email / URL / “free text tag” validators on public forms\n\n- WAF or gateway rules that reuse app patterns\n\n- Log redaction regex run on every line\n\n- LLM-generated “strict” validators with stacked stars and pluses"
+      ]
+    },
+    {
+      "h2": "Heuristic shapes to flag immediately",
+      "paras": [
+        "Nested quantifiers such as (a+)+, (a*)*, or (a+)* are the textbook form. Overlapping alternation like (a|a)+ or more subtle shared prefixes create the same explosion. Optional groups wrapped in outer repetition are easy to miss in review because they look tidy.",
+        "Also flag patterns that mix greedy repetition with a trailing condition that often fails, because the engine walks huge trees before rejecting. If you cannot sketch why the match is linear, treat it as guilty until proven otherwise.",
+        "Checklist — first pass",
+        "- Any quantifier inside another quantifier on the same group chain\n\n- Alternation branches that can match the same prefix\n\n- Unbounded .* or .+ before a failing literal on long strings\n\n- User-controlled input length with no hard cap before the regex runs"
+      ]
+    },
+    {
+      "h2": "Step-by-step workflow before a pattern hits production",
+      "paras": [
+        "- Cap input length at the framework layer before regex runs.\n\n- Author fixtures: short happy paths, long near-miss strings, and a few adversarial repeats.\n\n- Run the pattern in the production engine with a time budget (fail the test if it exceeds a few milliseconds on the long cases).\n\n- Rewrite nested repetition into clearer, bounded forms — or replace regex with a parser for structured data.\n\n- Document residual risk when you must keep a complex pattern, with an owner and a review date.",
+        "RegexProof calls out risky repetition when it explains a forge. That is a first pass, not a proof of safety under every input."
+      ]
+    },
+    {
+      "h2": "Engine choice as a control",
+      "paras": [
+        "Some deployments move hot validators to engines designed to avoid catastrophic backtracking (RE2-style guarantees). That is an architecture control, not a regex tweak. If you stay on backtracking engines such as typical ECMAScript RegExp or PCRE, you own the pattern review. Read the dialect you actually run: ECMA-262 RegExp for JavaScript, PCRE for many gateways.",
+        "Control | What it buys you | What it does not buy\nInput length cap | Bounds worst-case work | Correctness of the pattern\nHeuristic lint for nested +/* | Catches common shapes | Novel slow patterns\nTimed unit tests | Regression signal in CI | Proof against all adversaries\nNon-backtracking engine | Removes a whole class of risk | Feature parity with PCRE toys\nHuman review of LLM output | Stops stacked quantifiers early | A guarantee of perfection"
+      ]
+    },
+    {
+      "h2": "Common mistakes",
+      "paras": [
+        "- Assuming “it is only validation” so ReDoS does not apply\n\n- Copying a strict email regex with nested repetition because it feels thorough\n\n- Running regex on unbounded request bodies\n\n- Trusting a generator explanation without a timed fixture\n\n- Claiming “we never miss ReDoS” in sales copy — that overclaims"
+      ]
+    },
+    {
+      "h2": "Decision criteria: rewrite, relocate, or keep",
+      "paras": [
+        "Rewrite when the pattern is readable as a small state machine or string library calls. Relocate when you need rich matching but can put it off the request thread with strict timeouts. Keep only when fixtures stay fast on long near-miss inputs and an owner accepts residual risk in writing."
+      ]
+    },
+    {
+      "h2": "What this is NOT",
+      "paras": [
+        "These heuristics are not a formal proof, not a guarantee that RegexProof finds every dangerous pattern, and not a substitute for input caps and timeouts. We do not publish invented breach counts or “100% detection” claims. Use the checklist to prioritize review; keep OWASP and your engine docs open when you argue about a specific shape."
+      ]
+    },
+    {
+      "h2": "How I time fixtures without lying to myself",
+      "paras": [
+        "A ReDoS review that only uses short happy-path strings will always look fine. I keep a folder of near-miss inputs: long runs of the repeated character the pattern loves, then a failing trailer. The test fails if matching exceeds a small millisecond budget on the CI runner we actually use.",
+        "If the team cannot agree on a budget, start with a conservative cap and tighten once you have baselines. The point is a regression signal, not a scientific paper. Pair the timed test with an input length limit so production never sees megabyte-scale toys.",
+        "Example review questions",
+        "- What is the longest input we allow before regex runs?\n\n- Which group nests a quantifier inside another quantifier?\n\n- Can two alternation branches consume the same prefix?\n\n- Does any log-redaction job reuse this pattern on unbounded lines?\n\n- Who owns the rewrite if timing fails next month?"
+      ]
+    },
+    {
+      "h2": "Replacing regex with boring code",
+      "paras": [
+        "Many “clever” validators are clearer as split/join, URL parsers, or small hand parsers. Boring code has linear behavior you can read. I move structured formats (UUIDs, dates with fixed shapes, simple tokens) away from regex when the pattern starts collecting stars.",
+        "Regex still wins for light lexing. The honesty rule is simple: if you cannot explain the worst-case growth, do not put it on the request path."
+      ]
+    },
+    {
+      "h2": "Operator notes for LLM-assisted forges",
+      "paras": [
+        "Models like stacked quantifiers because they look precise. Treat every forge as untrusted until the heuristic checklist and timed fixtures pass. RegexProof’s edge-case callouts are a starting filter. Your CI budget and input caps are the controls that keep the site up.",
+        "When writing status updates for stakeholders, say what you measured (fixture time, input cap) instead of claiming complete protection. Overclaiming creates support debt when the next novel pattern appears."
+      ]
+    },
+    {
+      "h2": "Field notes: shipping without overclaiming",
+      "paras": [
+        "I refuse status language that says a tool never misses dialect bugs or ReDoS shapes. The honest line is: we run fixtures in the production engine, we cap input length, and we review nested quantifiers. Residual risk stays owned by a named person.",
+        "That stance keeps blog posts aligned with what RegexProof actually sells — a forge with explanations and edge-case flags — instead of a mythical perfect scanner. Readers who need formal assurance still need their own security review.",
+        "When you teach a junior teammate, have them break a pattern on purpose with a long near-miss string. Watching CPU climb teaches faster than another abstract warning. Then fix the pattern and keep the failing fixture in CI so the lesson sticks.",
+        "Finally, keep primary sources bookmarked: ECMA-262 for JavaScript RegExp behavior, PCRE docs for gateway rules, and OWASP for the ReDoS threat model. Tools help; the contract still lives in those references."
+      ]
+    },
+    {
+      "h2": "Closing",
+      "paras": [
+        "Flag nested quantifiers and overlapping alternation first, cap input length, and time your fixtures in the real engine. ReDoS is an application availability bug dressed as a clever pattern. Keep the cleverness small enough to explain."
+      ]
+    },
+    {
+      "h2": "Closing the loop after a slow fixture",
+      "paras": [
+        "When a timed fixture fails, I do not widen the budget first. I rewrite nested repetition, add an input cap, or move the check off the request path. Widening the budget without a rewrite teaches the system to accept slow patterns.",
+        "Write down the before-and-after fixture times in the ticket so the next reviewer sees the improvement. Keep the adversarial string in CI forever. That single habit prevents quiet regressions when someone later simplifies the pattern without re-running the long cases.",
+        "Keep the adversarial fixtures next to the pattern file so reviewers never hunt for them."
+      ]
+    },
+    {
+      "h2": "References",
+      "paras": [
+        "- OWASP ReDoS\n\n- ECMA-262 RegExp\n\n- PCRE",
+        "Try the product: RegexProof",
+        "2026-09-16 · primary sources only · no fabricated traffic metrics"
+      ]
+    },
+    {
+      "h2": "Related reads",
+      "paras": [
+        "- ecmascript-vs-pcre-dialect-traps-2026\n\n    - The LX AI Micro-SaaS Topic Matrix"
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "What is RegexProof?",
+      "a": "RegexProof converts a natural-language description into a regex for the engine you choose, then explains it part by part and flags edge cases."
+    },
+    {
+      "q": "Which regex flavors does RegexProof support?",
+      "a": "You choose the flavor — ECMAScript/JavaScript, PCRE, and others — and should validate against the production dialect, not only a paste-bin tester."
+    },
+    {
+      "q": "How does RegexProof reduce ReDoS risk?",
+      "a": "It explains repetition and alternation and calls out patterns prone to catastrophic backtracking, the root cause of ReDoS (Regular-expression Denial of Service)."
+    },
+    {
+      "q": "Is RegexProof free?",
+      "a": "The Free tier includes 10 forges per month; Pro is $19/mo for higher volume."
+    },
+    {
+      "q": "Why do ECMAScript and PCRE behave differently?",
+      "a": "Lookbehind support, Unicode modes, and recursive patterns differ across engines, so a pattern valid in PCRE can fail or act differently in JavaScript."
+    }
+  ],
+  "disclaimer": "Decision-support only. Not a formal verifier or completeness guarantee.",
+  "back": "Back to blog"
+}

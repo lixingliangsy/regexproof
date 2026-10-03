@@ -1,0 +1,141 @@
+{
+  "title": "Heurísticas de ReDoS para regex de aplicativos",
+  "eyebrow": "por RegexProof (LX AI)",
+  "lead": "Quantificadores aninhados como (a+)+ e alternâncias sobrepostas são formas clássicas de ReDoS. Quando a entrada do usuário é não confiável, prefira motores ou construtos que limitam o backtracking e fechem em caso de padrões que você não possa explicar. A OWASP documenta a classe de ataque; seu trabalho é manter essas formas fora dos caminhos de solicitação.",
+  "sections": [
+    {
+      "h2": "O que é ReDoS em termos de aplicativos",
+      "paras": [
+        "Regular-expression Denial of Service ocorre quando uma entrada criada forces o mecanismo de correspondência a realizar um backtrack catastrófico. Os picos de CPU, a latência de solicitação explode e um único endpoint pode esgotar o processo. Isso não é uma trivialidade teórica: qualquer expressão regular em uma fronteira HTTP, linha de log ou nome de upload é um candidato se usar repetição arriscada.",
+        "Começo com a página ReDoS da OWASP e, em seguida, mapeio para as nossas rotas (OWASP ReDoS). A passagem heurística é intencionalmente monótona: encontrar quantificadores aninhados, alternância sobreposta e repetição ambígua em campos de entrada grandes.",
+        "Onde isso morde primeiro",
+        "- Validadores de e-mail / URL / \"tag de texto livre\" em formulários públicos\n\n- Regras de WAF ou gateway que reutilizam padrões de aplicativos\n\n- Regex de redação de log executado em cada linha\n\n- Validadores \"strict\" gerados por LLM com estrelas e pluses empilhados"
+      ]
+    },
+    {
+      "h2": "Formas heurísticas para sinalizar imediatamente",
+      "paras": [
+        "Quantificadores aninhados, como (a+)+, (a*)* ou (a+)*, são a forma encontrada nos livros. Alternância sobreposta, como (a|a)+, ou prefixos compartilhados mais sutis, criam a mesma explosão. Grupos opcionais envoltos em repetição externa são fáceis de perder durante a revisão porque parecem organizados.",
+        "Também sinalize padrões que misturam repetição gulosa com uma condição trailing que frequentemente falha, porque o mecanismo percorre árvores enormes antes de rejeitar. Se você não consegue esboçar por que a correspondência é linear, trate-a como culpada até que se prove o contrário.",
+        "Lista de verificação — primeira passagem",
+        "- Qualquer quantificador dentro de outro quantificador na mesma cadeia de grupos\n\n- Ramos de alternância que podem corresponder ao mesmo prefixo\n\n-.* ou.+ ilimitados antes de um literal de falha em strings longas\n\n- Comprimento de entrada controlado pelo usuário sem limite rígido antes da execução do regex"
+      ]
+    },
+    {
+      "h2": "Fluxo de trabalho passo a passo antes de um padrão atingir a produção",
+      "paras": [
+        "- Limite o comprimento da entrada na camada do framework antes que o regex seja executado.\n\n- Autor de fixtures: caminhos felizes curtos, strings de quase erro longas e algumas repetições adversárias.\n\n- Execute o padrão no mecanismo de produção com um orçamento de tempo (falhe no teste se exceder alguns milissegundos nos casos longos).\n\n- Reescreva a repetição aninhada em formas limitadas e mais claras — ou substitua regex por um analisador para dados estruturados.\n\n- Documente o risco residual quando você deve manter um padrão complexo, com um proprietário e uma data de revisão.",
+        "RegexProof destaca a repetição arriscada quando explica uma forja. Essa é uma primeira passagem, não uma prova de segurança sob todas as entradas."
+      ]
+    },
+    {
+      "h2": "Escolha do mecanismo como controle",
+      "paras": [
+        "Algumas implantações movem validadores quentes para mecanismos projetados para evitar o backtrack catastrófico (garantias do estilo RE2). Isso é um controle de arquitetura, não uma ajuste de regex. Se você permanecer em mecanismos de backtrack, como os típicos ECMAScript RegExp ou PCRE, você é responsável pela revisão do padrão. Leia o dialeto que você realmente executa: ECMA-262 RegExp para JavaScript, PCRE para muitas gateways.",
+        "Controle | O que ele oferece | O que ele não oferece\nLimite de comprimento de entrada | Limita o pior caso de trabalho | Correção do padrão\nAnálise heurística para +/* aninhados | Captura formas comuns | Padrões lentos novos\nTestes unitários cronometrados | Sinal de regressão no CI | Prova contra todos os adversários\nMecanismo não de backtrack | Remove uma classe inteira de risco | Paridade de recursos com brinquedos PCRE\nRevisão humana da saída do LLM | Para quantificadores empilhados precocemente | Garantia de perfeição"
+      ]
+    },
+    {
+      "h2": "Erros comuns",
+      "paras": [
+        "- Supor que \"é apenas validação\" então ReDoS não se aplica\n\n- Copiar uma expressão regular de email estrita com repetição aninhada porque parece abrangente\n\n- Executar expressão regular em corpos de solicitação ilimitados\n\n- Confiar em uma explicação de gerador sem um teste cronometrado\n\n- Afirmar que \"nunca perdemos ReDoS\" em materiais de vendas — isso é uma superdeclaração"
+      ]
+    },
+    {
+      "h2": "Critérios de decisão: reescrever, relocar ou manter",
+      "paras": [
+        "Reescrever quando o padrão é legível como uma pequena máquina de estado ou chamadas de biblioteca de strings. Relocar quando você precisa de correspondência rica, mas pode adiá-la para fora da thread de solicitação com timeouts estritos. Manter apenas quando os fixtures permanecem rápidos em entradas de near-miss longas e um proprietário aceita o risco residual ao escrever."
+      ]
+    },
+    {
+      "h2": "O que isso não é",
+      "paras": [
+        "Essas heurísticas não são uma prova formal, não são uma garantia de que o RegexProof encontra todos os padrões perigosos e não são um substituto para limites de entrada e timeouts. Nós não publicamos contagens de violações inventadas ou alegações de “detecção de 100%”. Use a lista de verificação para priorizar a revisão; mantenha o OWASP e a documentação do seu mecanismo abertos quando discutir sobre uma forma específica."
+      ]
+    },
+    {
+      "h2": "Como eu cronometro fixtures sem mentir para mim mesmo",
+      "paras": [
+        "Uma revisão ReDoS que usa apenas strings felizes e curtas sempre parecerá boa. Eu mantenho uma pasta de entradas quase certas: longas sequências do caractere repetido que o padrão ama, e então um trailer de falha. O teste falha se a correspondência excede um orçamento de milissegundos pequeno no executor de CI que usamos.",
+        "Se a equipe não puder concordar com um orçamento, comece com um limite conservador e aperte uma vez que você tenha baseline. O ponto é um sinal de regressão, não um artigo científico. Emparelhe o teste cronometrado com um limite de comprimento de entrada para que a produção nunca veja brinquedos em escala de megabyte.",
+        "Exemplos de perguntas de revisão",
+        "- Qual é a entrada mais longa que permitimos antes que a regex execute?\n\n- Qual grupo aninha um quantificador dentro de outro quantificador?\n\n- Duas ramificações de alternância podem consumir o mesmo prefixo?\n\n- Algum trabalho de redação de log reutiliza esse padrão em linhas ilimitadas?\n\n- Quem é o proprietário da reescrita se o tempo falhar no próximo mês?"
+      ]
+    },
+    {
+      "h2": "Substituindo regex por código simples",
+      "paras": [
+        "Muitos validadores “inteligentes” são mais claros como split/join, analisadores de URL ou pequenos analisadores manuais. O código simples tem um comportamento linear que você pode ler. Eu movo formatos estruturados (UUIDs, datas com formas fixas, tokens simples) para longe do regex quando o padrão começa a coletar estrelas.",
+        "O regex ainda vence para lexing leve. A regra da honestidade é simples: se você não pode explicar o crescimento no pior caso, não coloque isso no caminho da solicitação."
+      ]
+    },
+    {
+      "h2": "Notas do operador para forjas assistidas por LLM",
+      "paras": [
+        "Modelos como quantificadores empilhados porque parecem precisos. Trate cada forja como não confiável até que a lista de verificação heurística e os fixtures temporizados sejam aprovados. As chamadas de casos de bordo do RegexProof são um filtro inicial. Seu orçamento de CI e os limites de entrada são os controles que mantêm o site ativo.",
+        "Ao escrever atualizações de status para as partes interessadas, diga o que você mediu (tempo de fixture, limite de entrada) em vez de afirmar proteção completa. Superdeclarações criam dívida de suporte quando o próximo padrão novo aparece."
+      ]
+    },
+    {
+      "h2": "Notas de campo: envio sem superestimar",
+      "paras": [
+        "Eu me recuso a usar linguagem de status que afirma que uma ferramenta nunca comete erros de dialecto ou formas de ReDoS. A linha honesta é: executamos testes no mecanismo de produção, limitamos o comprimento da entrada e revisamos quantificadores aninhados. O risco residual permanece sob a responsabilidade de uma pessoa nomeada.",
+        "Essa postura mantém os posts do blog alinhados com o que a RegexProof realmente vende — uma ferramenta com explicações e flags de casos de bordo — em vez de um scanner perfeito mítico. Os leitores que precisam de garantia formal ainda precisam realizar sua própria revisão de segurança.",
+        "Quando você ensina a um membro junior da equipe, peça que ele quebre um padrão propositadamente com uma string de quase-acerto longa. Ver o CPU subir ensina mais rápido do que outro aviso abstrato. Em seguida, corrija o padrão e mantenha o teste de unidade falho no CI para que a lição permaneça.",
+        "Por fim, mantenha as fontes primárias marcadas: ECMA-262 para o comportamento do RegExp JavaScript, documentos do PCRE para regras de gateway e OWASP para o modelo de ameaça do ReDoS. As ferramentas ajudam; o contrato ainda vive nessas referências. Além disso, é importante lembrar que a conformidade com regulamentações como a GDPR, WCAG, ADA e ARIA também é fundamental para o desenvolvimento de software seguro e acessível, e que a utilização de ferramentas como a Waffo pode ser útil nesse processo, mas não substitui a necessidade de conhecimento e compreensão dos padrões e regulamentações aplicáveis, incluindo o ECMAScript."
+      ]
+    },
+    {
+      "h2": "Fechamento",
+      "paras": [
+        "Sinalize quantificadores aninhados e alternância sobreposta primeiro, limite o comprimento da entrada e cronometre seus testes no motor real. ReDoS é um bug de disponibilidade de aplicativos disfarçado de padrão inteligente. Mantenha a inteligência pequena o suficiente para explicar."
+      ]
+    },
+    {
+      "h2": "Fechando o loop após um fixture lento",
+      "paras": [
+        "Quando um fixture cronometrado falha, eu não aumento o orçamento primeiro. Eu reescrevo a repetição aninhada, adiciono um limite de entrada ou removo a verificação do caminho da solicitação. Aumentar o orçamento sem reescrever ensina o sistema a aceitar padrões lentos.",
+        "Anote os tempos do fixture antes e depois no ticket, para que o próximo revisor veja a melhoria. Mantenha a string adversária no CI para sempre. Esse único hábito evita regressões silenciosas quando alguém mais tarde simplifica o padrão sem reexecutar os casos longos.",
+        "Mantenha os fixtures adversários ao lado do arquivo de padrão, para que os revisores nunca precisem procurá-los."
+      ]
+    },
+    {
+      "h2": "Referências",
+      "paras": [
+        "- OWASP ReDoS\n\n- ECMA-262 RegExp\n\n- PCRE",
+        "Tente o produto: RegexProof",
+        "16-09-2026 · somente fontes primárias · sem métricas de tráfego fabricadas"
+      ]
+    },
+    {
+      "h2": "Leituras relacionadas",
+      "paras": [
+        "- armadilhas de dialetos ecmascript-vs-pcre-2026\n\n    - A Matriz de Tópicos de Micro-SaaS de IA LX"
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "O que é RegexProof?",
+      "a": "RegexProof converte uma descrição em linguagem natural em uma regex para o mecanismo que você escolhe, então explica parte por parte e sinaliza casos de bordo."
+    },
+    {
+      "q": "Quais sabores de regex o RegexProof suporta?",
+      "a": "Você escolhe o sabor — ECMAScript/JavaScript, PCRE e outros — e deve validar contra o dialeto de produção, não apenas um tester de paste-bin."
+    },
+    {
+      "q": "Como o RegexProof reduz o risco de ReDoS?",
+      "a": "Ele explica repetição e alternância e chama a atenção para padrões propensos a backtracking catastrófico, a causa raiz de ReDoS (Regular-expression Denial of Service)."
+    },
+    {
+      "q": "O RegexProof é gratuito?",
+      "a": "A camada gratuita inclui 10 forjas por mês; Pro é $19/mês para volume mais alto."
+    },
+    {
+      "q": "Por que ECMAScript e PCRE se comportam de forma diferente?",
+      "a": "O suporte a lookbehind, modos Unicode e padrões recursivos diferem entre os mecanismos, então um padrão válido em PCRE pode falhar ou se comportar de forma diferente em JavaScript."
+    }
+  ],
+  "disclaimer": "Apoio à decisão apenas. Não é um verificador formal ou garantia de completude.",
+  "back": "Voltar ao blog"
+}

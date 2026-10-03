@@ -1,0 +1,135 @@
+{
+  "title": "Trappole di dialetto ECMAScript vs PCRE",
+  "eyebrow": "di RegexProof (LX AI)",
+  "lead": "Il supporto lookbehind, le modalità Unicode e i modelli ricorsivi differiscono tra i motori. Un modello che compila in PCRE può generare un errore o corrispondere in modo diverso in JavaScript. È sempre necessario convalidare contro il dialetto di produzione con gli stessi flag e modalità Unicode che si intende utilizzare — un tester paste-bin su un altro motore non è sufficiente.",
+  "sections": [
+    {
+      "h2": "Perché le trappole dei dialetti si verificano in app reali",
+      "paras": [
+        "La maggior parte dei team impara un solo tipo di dialetto e incolla modelli attraverso pile. Un backend che utilizza funzionalità di stile PCRE (sottopattern ricorsivi, alcune forme di lookbehind, quantificatori possessivi) accetterà felicemente un pattern che il browser non può nemmeno analizzare. Il contrario accade anche: un pattern Unicode con flag u di JavaScript si comporta diversamente quando qualcuno lo porta a una build PCRE orientata ai byte senza le stesse proprietà Unicode.",
+        "Tratto il dialetto come parte del contratto, allo stesso modo in cui tratto il dialetto SQL. Se il runtime è ECMAScript RegExp, la fonte di verità è la sezione RegExp dell'ECMA-262. Se il runtime è PCRE, la fonte di verità è la documentazione PCRE. I tester che commutano silenziosamente i motori nascondono il bug fino alla produzione.",
+        "Dove la discordanza solitamente entra",
+        "- Snippet di librerie di convalida \"condivise\" copiati da Stack Overflow senza un tag del motore\n\n- CI che esegue Python re mentre la gateway di edge esegue JavaScript\n\n- WAF o parser di log che utilizzano PCRE mentre il modulo dell'app utilizza ECMAScript\n\n- Regex generati da LLM che utilizzano la sintassi PCRE-ish di default a meno che non si fissi il tipo di dialetto, mantenendo la conformità con le norme RegexProof, WCAG, ARIA, ReDoS, ECMAScript, PCRE, GDPR, Waffo, ADA"
+      ]
+    },
+    {
+      "h2": "Differenze tra lookbehind e lookaround",
+      "paras": [
+        "Il lookbehind di lunghezza variabile è una trappola classica. I motori di esecuzione discordano sui lunghezze consentite e alcuni motori JavaScript più vecchi non supportavano il lookbehind. Anche quando entrambi i lati supportano il lookbehind, l'insieme dei modelli consentiti all'interno dell'asserzione può differire. Se la tua porta dipende da \"il token precedente deve essere X\", scrivi un test unitario nel motore di produzione, non in un playground PCRE.",
+        "Il lookaround è più ampiamente condiviso, ma la combinazione di lookaround con quantificatori annidati aumenta il rischio di ReDoS. La sicurezza del dialetto e la sicurezza contro il denial-of-service sono controlli separati; supera uno e puoi ancora fallire l'altro. Le note ReDoS di OWASP rimangono l'elenco di controllo pratico per il secondo controllo (OWASP ReDoS).",
+        "Regola pratica",
+        "Se una funzionalità non è in ECMA-262 RegExp, non spedirla al browser. Se hai bisogno di funzionalità PCRE-esclusive, mantieni quel modello sul lato PCRE e restituisci un booleano o un token normalizzato a JavaScript invece di spedire il modello grezzo."
+      ]
+    },
+    {
+      "h2": "Modalità Unicode e classi di caratteri",
+      "paras": [
+        "Le escape di proprietà Unicode, i caratteri del piano astrale e la folding dei casi dipendono dalle opzioni e dalle tabelle Unicode del motore. Un modello scritto con la flag u di JavaScript non è lo stesso oggetto di un modello PCRE con la modalità UTF abilitata con opzioni diverse. Il comportamento di dot-all / single-line differisce anche nel nome e nei valori predefiniti tra i diversi flavor.",
+        "Quando esamino i modelli generati, mi pongo tre domande: quali punti di codice devono essere abbinati, quali non devono essere abbinati e se il modello presume testo BMP-only. Email, emoji e input CJK sono dove appaiono errori silenziosi.",
+        "Checklist — Unicode",
+        "- Registra le opzioni esatte utilizzate in produzione (i, m, s/dotAll, u, v se disponibili)\n\n- Includi almeno un fixture del piano astrale se il testo dell'utente può contenere emoji\n\n- Evita di supporre che \\w significhi \"lettere in ogni lingua\"\n\n- Preferisci intervalli espliciti o escape di proprietà che hai verificato nel motore"
+      ]
+    },
+    {
+      "h2": "Ricorsione, riferimenti indietro e funzionalità \"utili\" di PCRE",
+      "paras": [
+        "I modelli ricorsivi e alcune chiamate di subroutine sono punti di forza di PCRE. ECMAScript RegExp non offre lo stesso set di strumenti. I generatori che emettono modelli con delimitatori bilanciati con ricorsione falliranno quando il consumatore è JavaScript. I gruppi atomici e i quantificatori possessivi sono un altro comfort sul lato PCRE che JavaScript non possiede nella stessa forma.",
+        "Il comportamento dei riferimenti indietro intorno ai gruppi falliti e alle corrispondenze vuote può anche sorprendere le persone che spostano i modelli tra motori. La modalità di errore raramente è un crash; è un'accettazione o un rifiuto silenzioso su input edge.",
+        "Funzionalità | ECMAScript RegExp | PCRE (tipico) | Regola di consegna\nRicerca indietro a lunghezza variabile | Limitata / dipendente dalla versione del motore | Supporto più ampio | Testare nel motore di destinazione\nSottopattern ricorsivi | Non disponibili | Disponibili | Mantenere solo sul lato server\nPossessivi / atomici | Non lo stesso set di strumenti | Disponibili | Non incollare in JS\nEscape delle proprietà Unicode | Con u/v | Con UTF + opzioni | Corrispondenza dei flag espliciti\nGruppi denominati | Supportati nei motori moderni | Supportati | Verificare ancora la sintassi di sostituzione"
+      ]
+    },
+    {
+      "h2": "Flusso di lavoro passo dopo passo che utilizzo prima di spedire un modello",
+      "paras": [
+        "- Scrivo prima gli esempi di accettazione e di rifiuto (cinque per ognuno sono sufficienti per iniziare).\n\n- Fisso il motore e le opzioni nel titolo del ticket (ad esempio: \"ECMAScript, opzioni u + i\").\n\n- Genero o creo il modello per quel motore solo.\n\n- Eseguo i fixture nello stesso runtime che l'utente utilizza (build del browser o versione di Node che si distribuisce).\n\n- Scansiono per quantificatori annidati e alternanza sovrapposta (passaggio ReDoS).\n\n- Solo allora incollo in un secondo motore se hai veramente bisogno di un runtime duale — aspettati modifiche.",
+        "RegexProof è progettato per mantenere la scelta del sapore esplicita e per spiegare i gruppi prima di incollare. Non sostituisce l'esecuzione dei fixture nel tuo binary di staging, assicurando la conformità con le linee guida WCAG, ARIA, GDPR, ADA e le specifiche PCRE e Waffo."
+      ]
+    },
+    {
+      "h2": "Errori comuni",
+      "paras": [
+        "- Avere fiducia in un test verde su regex101 con il sapore sbagliato selezionato\n\n- Condividere un pattern tra WAF (PCRE) e frontend (ECMAScript) senza fixture duali\n\n- Lasciare che un LLM emetta lookbehind o ricorsione senza specificare il motore\n\n- Trattare \"è stato compilato\" come \"corrisponde a ciò che intendiamo\"\n\n- Saltare la revisione ReDoS perché il pattern è \"solo per la convalida\""
+      ]
+    },
+    {
+      "h2": "Criteri di decisione: un motore o due",
+      "paras": [
+        "Rimani su un motore quando il modello controlla l'input dell'utente in un unico livello. Dividi i motori solo quando hai due proprietari, due file di fixture e un mapping documentato. Il dual-engine \"condivide la stessa stringa\" è il modo in cui le trappole dei dialetti diventano incidenti."
+      ]
+    },
+    {
+      "h2": "Cosa non è",
+      "paras": [
+        "Questo articolo non è un confronto completo di ogni sapore di regex, non una garanzia che RegexProof (o qualsiasi strumento) cattura ogni bug di dialetto, e non una pretesa che superare i fixture significa che il modello è sicuro sotto carico avversario. Non inventiamo metriche dei clienti. Usalo come checklist per gli operatori; tieni aperti i documenti ECMA-262 e PCRE quando discuti di casi limite, assicurandoti di essere conforme a GDPR, ADA e accessibilità ARIA, evitando ReDoS e mantenendo la compatibilità con ECMAScript e PCRE, senza dimenticare Waffo e le linee guida WCAG."
+      ]
+    },
+    {
+      "h2": "Come mappo un ticket a un contratto di motore",
+      "paras": [
+        "Ogni ticket regex dovrebbe nominare il runtime nel modo in cui nominiamo un database: \"Node 20 ECMAScript RegExp, flags u+i\" o \"gateway PCRE2 UTF, no recursion.\" Senza quella riga, i revisori discutono di gusto invece di contratti. Incollo la riga del motore nella descrizione della PR e nell'intestazione del file fixture in modo che CI e umani condividano una storia.",
+        "Quando il prodotto chiede \"la stessa regola nel browser e sul edge,\" divido il lavoro in due pattern con due file fixture. L'intento condiviso va bene; le stringhe non verificate condivise non sono ammesse. Il costo di manutenzione di due piccoli pattern è inferiore al costo di un incidente di dialetto su un campo di login o checkout.",
+        "Modello per la descrizione della PR",
+        "- Motore + versione + flag\n\n- Cinque fixture di accettazione e cinque fixture di rifiuto (stringhe grezze, non parafrasi)\n\n- Lunghezza massima di input applicata prima che il matcher venga eseguito\n\n- Nota ReDoS: quantificatori annidati esaminati sì/no\n\n- Proprietario per il rischio residuo se il pattern deve rimanere complesso",
+        "Nota: è importante preservare i termini come RegexProof, WCAG, ARIA, ReDoS, ECMAScript, PCRE, GDPR, Waffo, ADA per garantire la compatibilità e l'accessibilità."
+      ]
+    },
+    {
+      "h2": "Espressioni regolari generate da LLM: specificare il sapore nel prompt",
+      "paras": [
+        "Se chiedi a un modello di generare \"un'espressione regolare per gli indirizzi email\" senza specificare se si tratta di ECMAScript o PCRE, spesso si ottiene una risposta con lookbehind o abitudini possessive nel sapore PCRE. RegexProof richiede la scelta di un sapore per questo motivo. Esegui comunque i test nel tuo codice binario; una spiegazione chiara non è sufficiente per un lavoro di integrazione continua verde.",
+        "Vieto anche il copia-incolla da chat log nella produzione senza un secondo controllo umano che possa spiegare ogni gruppo. La modalità di errore non è costituita da errori di sintassi drammatici — si tratta di accettazioni silenziose e sbagliate su casi limite Unicode settimane dopo."
+      ]
+    },
+    {
+      "h2": "Note degli operatori dai moduli di micro-SaaS di spedizione",
+      "paras": [
+        "I moduli pubblici attirano strani caratteri Unicode, caratteri a larghezza zero e lavori di incolla da suite di ufficio. Le trappole di dialetto si verificano come \"funziona sul mio laptop\" perché il tester del laptop ha utilizzato un motore diverso rispetto al nodo edge. Mantieni un host di staging che riflette esattamente le flag regex di produzione.",
+        "Quando un cliente segnala un rifiuto falso, chiedi i punti di codice esatti (un dump esadecimale della stringa) prima di \"correggere\" il modello. Molti bug di dialetto sono invisibili nelle schermate."
+      ]
+    },
+    {
+      "h2": "Chiusura",
+      "paras": [
+        "Fissa il dialetto, scrivi fixture in quel dialetto, poi preoccupati di eleganza. Il bug costoso è il pattern che funziona nel tester sbagliato. Mantieni il motore di produzione onesto e tratta la copia incolla cross-engine come un task di porting con la sua propia revisione."
+      ]
+    },
+    {
+      "h2": "Riferimenti",
+      "paras": [
+        "- ECMA-262 RegExp\n\n- PCRE\n\n- OWASP ReDoS",
+        "Prova il prodotto: RegexProof",
+        "16-09-2026 · solo fonti primarie · nessuna metrica di traffico fabbricata"
+      ]
+    },
+    {
+      "h2": "Letture correlate",
+      "paras": [
+        "- redos-heuristics-for-application-regex-2026\n\n    - La matrice di argomenti LX AI Micro-SaaS"
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Cos'è RegexProof?",
+      "a": "RegexProof converte una descrizione in linguaggio naturale in un regex per il motore scelto, quindi lo spiega parte per parte e segnala i casi limite."
+    },
+    {
+      "q": "Quali flavor di regex supporta RegexProof?",
+      "a": "Scegli il flavor — ECMAScript/JavaScript, PCRE e altri — e dovresti convalidare contro il dialetto di produzione, non solo un tester paste-bin."
+    },
+    {
+      "q": "Come RegexProof riduce il rischio di ReDoS?",
+      "a": "Spiega la ripetizione e l'alternanza e segnala i modelli propensi al backtracking catastrofico, la causa principale di ReDoS (Regular-expression Denial of Service)."
+    },
+    {
+      "q": "RegexProof è gratuito?",
+      "a": "Il livello gratuito include 10 forge al mese; Pro è 19 $/mese per un volume più alto."
+    },
+    {
+      "q": "Perché ECMAScript e PCRE si comportano in modo diverso?",
+      "a": "Il supporto lookbehind, le modalità Unicode e i modelli ricorsivi differiscono tra i motori, quindi un modello valido in PCRE può non funzionare o comportarsi in modo diverso in JavaScript."
+    }
+  ],
+  "disclaimer": "Supporto alle decisioni. Non è un verificatore formale o una garanzia di completezza.",
+  "back": "Torna al blog"
+}

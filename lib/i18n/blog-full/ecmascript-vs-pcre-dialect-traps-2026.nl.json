@@ -1,0 +1,134 @@
+{
+  "title": "ECMAScript vs PCRE dialect valstrikken",
+  "eyebrow": "door RegexProof (LX AI)",
+  "lead": "Lookbehind-ondersteuning, Unicode-modus en recursieve patronen verschillen tussen motoren. Een patroon dat compileert in PCRE kan een uitzondering veroorzaken of anders overeenkomen in JavaScript. Valideer altijd tegen de productiedialect in dezelfde vlaggen en Unicode-modus die u zal verzenden - een paste-bin-tester op een andere motor is niet voldoende.",
+  "sections": [
+    {
+      "h2": "Waarom dialectvalstrikken in echte apps verschijnen",
+      "paras": [
+        "De meeste teams leren één smaak goed kennen en plakken patronen over stacks. Een backend dat PCRE-stijlfuncties gebruikt (recursieve subpatronen, bepaalde lookbehind-vormen, possessieve quantifiers) accepteert een patroon dat de browser niet eens kan parseren. Het omgekeerde gebeurt ook: een JavaScript u-flag Unicode-patroon gedraagt zich anders wanneer iemand het naar een byte-georiënteerde PCRE-build port zonder dezelfde Unicode-eigenschappen.",
+        "Ik behandel dialect als onderdeel van het contract, op dezelfde manier als ik SQL-dialect behandel. Als de runtime ECMAScript RegExp is, is de bron van waarheid het ECMA-262 RegExp-gedeelte. Als de runtime PCRE is, is de bron van waarheid de PCRE-documentatie. Testers die stilzwijgend engines wisselen, verbergen de bug totdat deze in productie komt.",
+        "Waar de mismatch meestal binnenkomt",
+        "- Gedeelde \"validatiebibliotheek\"-snippets gekopieerd van Stack Overflow zonder engine-tag\n\n- CI die Python re uitvoert terwijl de edge-gateway JavaScript uitvoert\n\n- WAF of logparsers die PCRE gebruiken terwijl het app-formulier ECMAScript gebruikt\n\n- LLM-gegenereerde regex die standaard PCRE-achtige syntaxis gebruikt, tenzij je de smaak vastzet. Dit kan problemen veroorzaken met toegankelijkheid (WCAG, ADA), gegevensbescherming (GDPR) en beveiliging (ARIA, ReDoS). Het is belangrijk om de juiste engine te gebruiken en te testen om dit soort problemen te voorkomen. Ook moet je op letten dat je geen RegexProof of Waffo-problemen introduceert."
+      ]
+    },
+    {
+      "h2": "Verschillen in lookbehind en lookaround",
+      "paras": [
+        "Variabele-lengte lookbehind is een klassieke valkuil. Motoren zijn het oneens over welke lengtes legaal zijn, en sommige oudere JavaScript-motoren hadden helemaal geen lookbehind. Zelfs als beide partijen lookbehind ondersteunen, kan de set van toegestane patronen binnen de bewering verschillen. Als uw poort afhankelijk is van 'het vorige token moet X zijn', schrijf dan een eenheidstest in de productiemotor, niet in een PCRE-speeltuin.",
+        "Lookahead is meer algemeen geaccepteerd, maar het combineren van lookaround met geneste kwantoren verhoogt het ReDoS-risico. Dialectveiligheid en denial-of-serviceveiligheid zijn separate controles; slaag voor de ene en u kunt nog steeds falen voor de andere. De ReDoS-notities van OWASP blijven de praktische checklist voor de tweede controle (OWASP ReDoS).",
+        "Praktische regel",
+        "Als een functie niet in ECMA-262 RegExp zit, lever deze dan niet aan de browser. Als u PCRE-only-functies nodig heeft, houd het patroon dan aan de PCRE-kant en retourneer een boolean of een genormaliseerd token naar JavaScript in plaats van het ruwe patroon te verzenden."
+      ]
+    },
+    {
+      "h2": "Unicode-modi en karakterklassen",
+      "paras": [
+        "Unicode-eigenschapontsnappingen, astrale vlaktekens en hoofdlettergevoeligheid zijn afhankelijk van vlaggen en engine-Unicode-tabellen. Een patroon geschreven met de JavaScript-u-vlag is niet hetzelfde object als een PCRE-patroon met UTF-modus ingeschakeld onder verschillende opties. Dot-all / single-line-gedrag verschilt ook in naamgeving en standaardinstellingen over smaakvarianten heen.",
+        "Wanneer ik gegenereerde patronen beoordeel, stel ik drie vragen: welke codepunten moeten overeenkomen, welke mogen niet en of het patroon ervan uitgaat dat de tekst alleen bestaat uit BMP (Basic Multilingual Plane)-tekens. E-mail, emoji en CJK-invoer zijn waar stilzwijgende mismatch verschijnt.",
+        "Controlelijst — Unicode",
+        "- Noteer de exacte vlaggen die in productie worden gebruikt (i, m, s/dotAll, u, v waar beschikbaar)\n\n- Neem ten minste één astrale-vlaktestuk op als gebruikerstekst emoji kan bevatten\n\n- Ga er niet van uit dat \\w “letters in elke taal” betekent\n\n- Geef de voorkeur aan expliciete bereiken of eigenschapontsnappingen die u in de engine heeft geverifieerd"
+      ]
+    },
+    {
+      "h2": "Recursie, backreferences en \"hulprijke\" PCRE-functies",
+      "paras": [
+        "Recursieve patronen en sommige subroutine-aanroepen zijn sterke punten van PCRE. ECMAScript RegExp biedt niet hetzelfde gereedschapskist. Generatoren die gebalanceerde-scheidingstekenpatronen met recursie emitteren, zullen falen wanneer de consument JavaScript is. Atomische groepen en possessieve kwantoren zijn een ander comfort aan de kant van PCRE dat JavaScript in dezelfde vorm ontbeert.",
+        "Het gedrag van backreferences rondom gefaalde groepen en lege overeenkomsten kan mensen die patronen tussen motoren verplaatsen ook verrassen. De foutmodus is zelden een crash; het is een stille verkeerde acceptatie of afwijzing bij randinvoer.",
+        "Functie | ECMAScript RegExp | PCRE (typisch) | Scheepsregel\nVariabele-lengte lookbehind | Beperkt / engine-versie-afhankelijk | Breder ondersteuning | Test in doelmotor\nRecursieve subpatronen | Niet beschikbaar | Beschikbaar | Houd server-side alleen\nPossessief / atomisch | Niet hetzelfde gereedschapskist | Beschikbaar | Plak niet in JS\nUnicode-eigenschap-escapes | Met u/v | Met UTF + opties | Match-vlaggen expliciet\nGenoemde groepen | Ondersteund in moderne motoren | Ondersteund | Verifieer nog steeds vervangsyntax"
+      ]
+    },
+    {
+      "h2": "Stap-voor-stap workflow die ik gebruik voordat ik een patroon verzend",
+      "paras": [
+        "- Schrijf eerst de acceptatievoorbeelden en afwijzingsvoorbeelden (vijf van elk is genoeg om te beginnen).\n\n- Zet de engine en vlaggen vast in de titel van de ticket (bijvoorbeeld: \"ECMAScript, vlaggen u + i\").\n\n- Genereer of maak het patroon voor die engine alleen.\n\n- Voer de fixtures uit in dezelfde runtime waar de gebruiker op klikt (browserbuild of Node-versie die u implementeert).\n\n- Scan op geneste quantoren en overlappende alternatie (ReDoS-pas).\n\n- Pas dan plak je het in een tweede engine als je echt een dubbele runtime nodig hebt - verwacht bewerkingen.",
+        "RegexProof is ontworpen om de keuze van de smaak expliciet te houden en groepen uit te leggen voordat je plakt. Het vervangt niet het uitvoeren van fixtures in uw staging-binaire bestand. Het ondersteunt WCAG, ARIA, GDPR, Waffo en ADA."
+      ]
+    },
+    {
+      "h2": "Gangbare fouten",
+      "paras": [
+        "- Vertrouwen op een groene test op regex101 met de verkeerde smaak geselecteerd\n\n- Het delen van één patroon over WAF (PCRE) en frontend (ECMAScript) zonder dubbele fixtures\n\n- Het toelaten van een LLM om lookbehind of recursie te emitteren zonder de engine te specificeren\n\n- Het behandelen van \"het compileert\" als \"het komt overeen met wat we bedoelen\"\n\n- Het overslaan van ReDoS-beoordeling omdat het patroon \"alleen voor validatie\" is, en negeren van WCAG, ARIA, GDPR, Waffo en ADA-richtlijnen"
+      ]
+    },
+    {
+      "h2": "Beslissingscriteria: één motor of twee",
+      "paras": [
+        "Blijf bij één motor wanneer het patroon gebruikersinvoer in één laag afhandelt. Splits motoren alleen wanneer je twee eigenaren, twee fixture-bestanden en een gedocumenteerde mapping hebt. Dual-engine \"deelt hetzelfde teken\" is hoe dialectvalstrikken incidenten worden."
+      ]
+    },
+    {
+      "h2": "Wat dit niet is",
+      "paras": [
+        "Dit artikel is geen volledige vergelijking van elke regex-smaken, geen garantie dat RegexProof (of enig ander hulpmiddel) elke dialectfout vindt, en geen bewering dat het doorstaan van tests betekent dat het patroon veilig is onder adversarial load. We verzinnen geen klantmetrieken. Gebruik het als een checklist voor operators; houd de ECMA-262 en PCRE-documenten open wanneer je discussieert over edge cases, en let op de toepassing van WCAG, ARIA, ReDoS, ECMAScript, GDPR, Waffo en ADA."
+      ]
+    },
+    {
+      "h2": "Hoe kaart ik een ticket naar een engine-contract",
+      "paras": [
+        "Elk regex-ticket moet de runtime benoemen op de manier waarop we een database benoemen: \"Node 20 ECMAScript RegExp, flags u+i\" of \"gateway PCRE2 UTF, geen recursie.\" Zonder die regel discussiëren reviewers over smaak in plaats van contracten. Ik plak de engine-regel in de PR-beschrijving en in de header van het fixture-bestand, zodat CI en mensen één verhaal delen.",
+        "Wanneer product vraagt om \"dezelfde regel in de browser en op de edge\", splits ik het werk in twee patronen met twee fixture-bestanden. Gedeelde intentie is prima; gedeelde ongeverifieerde strings zijn dat niet. De kosten van het onderhoud van twee kleine patronen zijn lager dan de kosten van één dialectincident op een inlog- of checkout-veld.",
+        "Sjabloon voor de PR-beschrijving",
+        "- Engine + versie + flags\n\n- Vijf accept-fixture en vijf reject-fixture (ruwe strings, geen parafrases)\n\n- Maximale invoerlengte afgedwongen voordat de matcher wordt uitgevoerd\n\n- ReDoS-opmerking: geneste quantifiers beoordeeld ja/nee\n\n- Eigenaar voor resterend risico als het patroon complex moet blijven en voldoet aan de GDPR, Waffo, ADA, WCAG, ARIA en is RegexProof"
+      ]
+    },
+    {
+      "h2": "LLM-gegenereerde regex: bevestig de smaak in de prompt",
+      "paras": [
+        "Als je een model vraagt om 'een regex voor e-mails' zonder ECMAScript of PCRE te noemen, krijg je vaak een antwoord met de smaak van PCRE met lookbehind of possessive gewoontes. RegexProof dwingt een smaakeuze af om deze reden. Voer de fixtures nog steeds uit in uw binaire bestand; een heldere verklaring is geen groene CI-taak.",
+        "Ik verbied ook het kopiëren en plakken van chatlogs naar productie zonder een tweede mens die elke groep kan verklaren. De foutmodus is niet dramatische syntaxisfouten - het zijn stille verkeerde accepts op Unicode randgevallen weken later."
+      ]
+    },
+    {
+      "h2": "Notities van operators van verzending micro-SaaS formulieren",
+      "paras": [
+        "Openbare formulieren trekken vreemde Unicode, nulbrede tekens en plakklussen van kantoorsoftware aan. Dialectvalkuilen komen tot uiting als “werkt op mijn laptop” omdat de laptop-tester een andere motor gebruikte dan de edge-knooppunt. Houd één staging-host aan die productieregex-vlaggen exact weerspiegelt.",
+        "Wanneer een klant een vals afwijzen rapporteert, vraag dan naar de exacte codepunten (een hexadump van de string) voordat je het patroon “oplost”. Veel dialectbugs zijn onzichtbaar in schermafbeeldingen."
+      ]
+    },
+    {
+      "h2": "Afronding",
+      "paras": [
+        "Bevestig de dialect, schrijf fixtures in die dialect, en maak je dan zorgen over elegantie. De dure bug is het patroon dat werkt in de verkeerde tester. Houd de productiemotor eerlijk, en behandel cross-engine plakken als een portingtaak met zijn eigen review."
+      ]
+    },
+    {
+      "h2": "Referenties",
+      "paras": [
+        "- ECMA-262 RegExp\n\n- PCRE\n\n- OWASP ReDoS",
+        "Probeer het product: RegexProof",
+        "2026-09-16 · alleen primaire bronnen · geen gefabriceerde verkeersmetrieken"
+      ]
+    },
+    {
+      "h2": "Gerelateerde artikelen",
+      "paras": [
+        "- redos-heuristics-for-application-regex-2026\n\n    - De LX AI Micro-SaaS Topic Matrix"
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Wat is RegexProof?",
+      "a": "RegexProof converteert een natuurlijke-taalbeschrijving naar een regex voor de motor die u kiest, en legt deze vervolgens deel voor deel uit en markeert randgevallen."
+    },
+    {
+      "q": "Welke regex-smaakjes ondersteunt RegexProof?",
+      "a": "U kiest de smaak - ECMAScript/JavaScript, PCRE en anderen - en moet valideren tegen de productiedialect, niet alleen een paste-bin-tester."
+    },
+    {
+      "q": "Hoe vermindert RegexProof het ReDoS-risico?",
+      "a": "Het legt herhaling en alternatie uit en wijst patronen aan die gevoelig zijn voor catastrofale backtracking, de oorzaak van ReDoS (Regular-expression Denial of Service)."
+    },
+    {
+      "q": "Is RegexProof gratis?",
+      "a": "Het Free-tarief omvat 10 forges per maand; Pro is $19/maand voor een hoger volume."
+    },
+    {
+      "q": "Waarom gedragen ECMAScript en PCRE zich anders?",
+      "a": "Lookbehind-ondersteuning, Unicode-modus en recursieve patronen verschillen tussen motoren, dus een patroon dat geldig is in PCRE kan falen of anders werken in JavaScript."
+    }
+  ],
+  "disclaimer": "Ondersteuning voor beslissingen. Geen formeel verificatie- of volledigheidsgarantie.",
+  "back": "Terug naar blog"
+}

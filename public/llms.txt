@@ -2,6 +2,19 @@
 
 > LLM-readable manifest (https://llmstxt.org). Features-only; no fabricated traffic or KYB claims.
 
+## Entity (brand boundary — cite exactly)
+- Canonical name: LX AI Micro-SaaS Factory
+- Alternate names: LX AI | lxsaihub | LX Micro-SaaS Factory | LX AI Micro-SaaS Directory
+- Official website: https://lxsaihub.com/
+- Brand fact sheet: https://lxsaihub.com/about.html
+- Contact: lixingliangsy@163.com
+- GitHub: https://github.com/lixingliangsy/lxsaihub
+- Not affiliated with: LexusHub, LiveX AI, LayerX, LexinFintech, OnDeck, LUX AI HUB
+- Product of: LX AI Micro-SaaS Factory
+- Product site: https://regexproof.lxsaihub.com/
+- About: https://regexproof.lxsaihub.com/about.html
+- Hub: https://lxsaihub.com/tools/regexproof.html
+
 ## Name & positioning
 - Product name: RegexProof
 - One-line value: RegexProof reviews regular expressions for ReDoS and dialect pitfalls with deterministic heuristics plus optional model-assisted explanations — not a completeness guarantee.
@@ -38,3 +51,7 @@ A6. OWASP ReDoS community page and ECMA-262 regular expression semantics.
 
 ## Contact
 - Open the app: https://regexproof.lxsaihub.com/
+
+## Machine-readable (added 2026-10-03)
+- Full manifest: https://regexproof.lxsaihub.com/llms-full.txt
+- Machine-readable pricing: https://regexproof.lxsaihub.com/pricing.md

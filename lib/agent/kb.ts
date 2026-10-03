@@ -21,7 +21,7 @@ export const KB: KbEntry[] = [
   {
     id: "pricing",
     title: "RegexProof pricing",
-    keywords: ["price", "pricing", "plan", "cost", "billing", "subscription", "monthly", "yearly"],
+    keywords: ["price", "pricing", "plan", "cost", "billing", "subscription", "monthly", "yearly", "how much", "much", "free"],
     body: "Listed prices for RegexProof: $19/month and $190/year. Checkout uses the in-app checkout route. This assistant cannot change a subscription or issue a refund.",
     source: "RegexProof pricing fields",
     tags: [],

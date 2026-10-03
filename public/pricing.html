@@ -249,7 +249,7 @@
       </ul>
       <div class="nav-actions">
         <a class="btn-ghost" href="#login">Sign in</a>
-        <a class="btn btn-primary" href="/app">Start free</a>
+        <a class="btn btn-primary" href="/app">Get started</a>
         <button class="hamburger" id="menuToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
@@ -261,7 +261,7 @@
     <a href="product.html">Product</a>
     <a href="pricing.html" aria-current="page">Pricing</a>
     <a href="index.html#features">Features</a>
-    <a class="btn btn-primary" href="/app">Start free</a>
+    <a class="btn btn-primary" href="/app">Get started</a>
   </div>
 </header>
 
@@ -291,7 +291,7 @@
             <span class="period" data-period>/ mo</span>
           </div>
           <p class="price-note" data-note>Free forever, no card required</p>
-          <a class="btn btn-secondary btn-block" href="/app">Start free</a>
+          <a class="btn btn-secondary btn-block" href="/app">Get started</a>
           <ul class="feature-list">
             <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>10 forges per month</li>
             <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>All 5 language flavors</li>
@@ -307,7 +307,7 @@
           <p class="tagline">For developers who forge daily</p>
           <div class="price">
             <span class="currency">$</span>
-            <span class="amount" data-monthly="19" data-annual="190">19</span>
+            <span class="amount" data-monthly="19" data-annual="16">19</span>
             <span class="period" data-period>/ mo</span>
           </div>
           <p class="price-note" data-note>Monthly billing, cancel anytime</p>
@@ -471,14 +471,18 @@
         el.textContent=annual?el.dataset.annual:el.dataset.monthly;
       });
       document.querySelectorAll(".period[data-period]").forEach(function(el){
-        el.textContent=annual?"/ yr":"/ mo";
+        el.textContent="/ mo";
       });
       document.querySelectorAll(".price-note[data-note]").forEach(function(el){
         if(el.closest(".plan").querySelector('[data-monthly="0"]')){
           el.textContent="Free forever, no card required";
         } else if(el.closest(".plan").querySelector('[data-monthly="19"]')){
-          el.textContent=annual?"Billed $190/year, cancel anytime":"Monthly billing, cancel anytime";
+          el.textContent=annual?"Billed annually — $190/year (save $38, ≈2 months free)":"Monthly billing, cancel anytime";
         }
+      });
+      // keep checkout links in sync with the billing period (display price must match charge)
+      document.querySelectorAll('a[href*="/api/checkout"]').forEach(function(link){
+        link.setAttribute("href", annual ? "/api/checkout?cycle=yearly" : "/api/checkout?cycle=monthly");
       });
     }
     if(m&&a){

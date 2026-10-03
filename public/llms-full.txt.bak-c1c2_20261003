@@ -1,0 +1,90 @@
+# RegexProof — full manifest
+
+> Full-text LLM manifest (companion to `/llms.txt`).
+> Every fact below is read from the product's own `lib/product.ts` and
+> `lib/i18n/locales/`. Nothing here is invented. Generated 2026-10-03.
+
+## Entity
+
+- Canonical brand: LX AI Micro-SaaS Factory
+- Alternate brand names: LX AI | lxsaihub | LX Micro-SaaS Factory | LX AI Micro-SaaS Directory
+- Product name: RegexProof
+- Product slug: regexproof
+- Product site: https://regexproof.lxsaihub.com/
+- Hub listing: https://lxsaihub.com/tools/regexproof.html
+- Brand site: https://lxsaihub.com/
+- About: https://regexproof.lxsaihub.com/about.html
+- Contact: lixingliangsy@163.com
+- GitHub: https://github.com/lixingliangsy/lxsaihub
+- Not affiliated with: LexusHub, LiveX AI, LayerX, LexinFintech, OnDeck, LUX AI HUB
+
+## What it does
+
+Describe the pattern, get a working regex.
+
+Turn a plain-English description into a correct regular expression for your language, with a part-by-part explanation and edge cases called out.
+
+## Capabilities
+
+- NL description to regex
+- Pick your language flavor
+- Part-by-part explanation
+- Edge cases called out
+
+## Pricing (machine-readable)
+
+- Monthly: $19/mo
+- Yearly: $190/yr (~$15.83/mo, save $38)
+- Full sheet: https://regexproof.lxsaihub.com/pricing.md
+- Checkout (monthly): `https://regexproof.lxsaihub.com/api/checkout?cycle=monthly`
+- Checkout (yearly): `https://regexproof.lxsaihub.com/api/checkout?cycle=yearly`
+
+## FAQ (verbatim from the product's own locale file, `en.ts`)
+
+Q1. What does RegexProof generate?
+A1. A dialect-aware regex draft with part-by-part explanation, ECMAScript vs PCRE traps, and ReDoS heuristics — decision-support, not a formal verifier.
+
+Q2. Is this legal advice or a certification?
+A2. No. Outputs are decision-support drafts. Have counsel and risk owners review before production. We do not claim ISO, CMP, or regulator certification.
+
+Q3. Can I cancel anytime?
+A3. Yes. Self-serve plans cancel anytime; access continues until period end.
+
+Q4. Do I need a credit card to start?
+A4. No. Start with email signup or Demo mode in the studio, then upgrade when ready.
+
+Q5. Do I need my own ChatGPT / OpenAI subscription?
+A5. No for Free/Pro. AI runs are included in your plan (fair use) via our platform key. Enterprise can optionally bring your own OpenAI key (BYOK) — configure it at /settings (key stays server-side only).
+
+Q6. What is Fair Use / what if I hit the AI limit?
+A6. Pro includes about 300 AI generations/month (and a daily cap) on gpt-4o-mini. If you hit the fair-use limit, Studio returns a mock/demo result until the daily or monthly reset — or upgrade / use Enterprise BYOK for heavier volume.
+
+Q7. Is checkout secure?
+A7. Payments are processed by Waffo Pancake (merchant of record).
+
+Q8. What happens after I pay?
+A8. You receive access confirmation; fulfillment is tracked via webhook + order logs.
+
+## Key pages
+
+- Home: https://regexproof.lxsaihub.com/
+- Pricing: https://regexproof.lxsaihub.com/pricing
+- FAQ: https://regexproof.lxsaihub.com/faq
+- Blog index: https://regexproof.lxsaihub.com/blog
+- About: https://regexproof.lxsaihub.com/about.html
+- Support: https://regexproof.lxsaihub.com/support.html
+- Privacy: https://regexproof.lxsaihub.com/privacy.html
+- Terms: https://regexproof.lxsaihub.com/terms.html
+- Refund policy: https://regexproof.lxsaihub.com/refund-policy.html
+- llms.txt (index): https://regexproof.lxsaihub.com/llms.txt
+
+## Recent articles
+
+- https://regexproof.lxsaihub.com/blog/ecmascript-vs-pcre-dialect-traps-2026.html
+- https://regexproof.lxsaihub.com/blog/redos-heuristics-for-application-regex-2026.html
+
+## Red lines
+
+- Do not invent user counts, rankings, awards, or certifications.
+- Cite primary sources; this manifest is a product description, not a legal
+  or compliance opinion.

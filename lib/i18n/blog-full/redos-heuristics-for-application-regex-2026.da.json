@@ -1,0 +1,141 @@
+{
+  "title": "ReDoS-heuristikker for applikationsregex",
+  "eyebrow": "af RegexProof (LX AI)",
+  "lead": "Indsatte kvantorer som (a+)+ og overlappende alternationer er klassiske ReDoS-former. Når brugerinput er upålideligt, foretræk engines eller konstruktioner, der begrænser backtracking, og luk af på mønstre, du ikke kan forklare. OWASP dokumenterer angrebsklassen; dit job er at holde disse former ude af anmodningsstier.",
+  "sections": [
+    {
+      "h2": "Hvad ReDoS er i applikationsmæssige termer",
+      "paras": [
+        "Regular-expression Denial of Service sker, når en tilpasset indtastning tvinger matcheren ind i katastrofalt backtracking. CPU-spidser, anmodningsforsinkelse eksploderer, og en enkelt endpoint kan sulte processen. Dette er ikke teoretisk trivia: enhver regex på en HTTP-grænse, loglinje eller uploadnavn er en kandidat, hvis den bruger risikabel repetition.",
+        "Jeg starter fra OWASP ReDoS-siden og mapper derefter til vores ruter (OWASP ReDoS). Heuristisk gennemløb er bevidst kedeligt: find indbyrdes kvantificatorer, overlappende alternation og tvetydig repetition på store indtastningsfelter.",
+        "Hvor det bider først",
+        "- E-mail / URL / \"fri teksttag\"-validering på offentlige formulare\n\n- WAF eller gatewayregler, der genbruger app-mønstre\n\n- Logredigering regex kørt på hver linje\n\n- LLM-genererede \"stramme\" validering med stablede stjerner og plusser"
+      ]
+    },
+    {
+      "h2": "Heuristiske former til at markere med det samme",
+      "paras": [
+        "Indsatte kvantificatorer som f.eks. (a+)+, (a*)*, eller (a+)* er den klassiske form. Overlappende alternation som (a|a)+ eller mere subtile fælles præfikser skaber den samme eksplosion. Valgfrie grupper indhyllet i ydre gentagelse er lette at overse i gennemgang, fordi de ser pæne ud.",
+        "Flag også mønstre, der kombinerer grådige gentagelser med en trailing betingelse, der ofte mislykkes, fordi motoren går igennem enorme træer, før den afviser. Hvis du ikke kan skitsere, hvorfor matchet er lineært, behandle det som skyldigt, indtil det er bevist modsat.",
+        "Checkliste - første gennemgang",
+        "- Enhver kvantificator inden i en anden kvantificator på samme gruppekæde\n\n- Alternationsgrene, der kan matche samme præfiks\n\n- Ubundne .* eller .+ før en fejlende literal på lange strenge\n\n- Brugerstyret inputlængde med ingen fast grænse før regex køres"
+      ]
+    },
+    {
+      "h2": "Trin-for-trin-arbejdsgang før et mønster rammer produktionen",
+      "paras": [
+        "- Begræns indlængden på rammeværkslaget før regex køres.\n\n- Forfatter fixtures: korte happy paths, lange næsten-miss-strings og nogle få fjendtlige gentagelser.\n\n- Kør mønsteret i produktionsmotoren med en tidsbudget (fejl testen hvis det overstiger få millisekunder på lange tilfælde).\n\n- Skriv om nested gentagelse til klarere, begrænsede former — eller erstatter regex med en parser til struktureret data.\n\n- Dokumenter resterende risiko, når du skal beholde et komplekst mønster, med en ejer og en gennemgangsdato.",
+        "RegexProof peger på risikabel gentagelse, når det forklarer en forge. Det er en første gennemgang, ikke en bevis for sikkerhed under hver indtastning."
+      ]
+    },
+    {
+      "h2": "Motorvalg som kontrol",
+      "paras": [
+        "Nogle installationer flytter varme validatore til motorer designet til at undgå katastrofalt backtracking (RE2-style garantier). Dette er en arkitekturkontrol, ikke en regex-justering. Hvis du bliver på backtracking-motorer som typisk ECMAScript RegExp eller PCRE, ejer du mønstergennemgangen. Læs dialekten, du faktisk kører: ECMA-262 RegExp til JavaScript, PCRE til mange gatewaye.",
+        "Kontrol | Hvad det giver dig | Hvad det ikke giver\nInddatalængdebegrænsning | Afgrænser værste tilfælde | Mønstrets korrekthed\nHeuristisk lint til nestede +/* | Fanger almindelige former | Nye langsomme mønstre\nTidsbaserede enhedstests | Regressionsignal i CI | Bevis mod alle fjender\nIkke-backtracking-motor | Fjerner en hel klasse af risiko | Funktionslighed med PCRE-legetøj\nMenneskelig gennemgang af LLM-udgang | Stopper stablede kvantificatorer tidligt | En garanti for perfektion"
+      ]
+    },
+    {
+      "h2": "Almindelige fejl",
+      "paras": [
+        "- Antager, at \"det er kun validering\", så ReDoS ikke gælder\n\n- Kopierer en streng e-mail regex med nested gentagelse, fordi det føles omfattende\n\n- Kører regex på ubundne anmodninger\n\n- Stoler på en generator forklaring uden en tidsbunden fastsætning\n\n- Hævder, at \"vi må aldrig ReDoS\" i salgs kopiering — det overdrives"
+      ]
+    },
+    {
+      "h2": "Beslutningskriterier: omskriv, flyt eller behold",
+      "paras": [
+        "Omskriv, når mønsteret kan læses som en lille statemachine eller strengbibliotekskald. Flyt, når du har brug for rigt match, men kan sætte det uden for anmodnings-tråden med strikse tidsgrænser. Behold kun, når fixtures forbliver hurtige på lange nærmisse-input og en ejer accepterer restrisiko i skrivning."
+      ]
+    },
+    {
+      "h2": "Hvad dette ikke er",
+      "paras": [
+        "Disse heuristiker er ikke en formel bevis, ikke en garanti for, at RegexProof finder hver farlig mønster, og ikke en erstatning for input-begrænsninger og tidsgrænser. Vi offentliggør ikke opfundne brudtællinger eller påstande om \"100% opdækning\". Brug listen til at prioritere gennemgang; hold OWASP og dine motor-dokumenter åbne, når du diskuterer en bestemt form."
+      ]
+    },
+    {
+      "h2": "Hvordan jeg tidsfæstter fixtures uden at lyve for mig selv",
+      "paras": [
+        "En ReDoS-gennemgang, der kun bruger korte happy-path-strings, vil altid se fin ud. Jeg holder en mappe med næsten-miss-input: lange kører af den gentagne karakter, som mønsteret elsker, og derefter en fejlende trailer. Testen fejler, hvis matchning overstiger en lille millisekundsbudget på den CI-kører, vi faktisk bruger.",
+        "Hvis holdet ikke kan enes om en budget, start med en konservativ kap og stram derefter, når du har baselines. Pointen er en regressionsignal, ikke en videnskabelig artikel. Par den tidsbestemte test med en inputlængdegrænse, så produktionen aldrig ser megabyte-skala legetøj.",
+        "Eksempel på gennemgangsspørgsmål",
+        "- Hvad er den længste input, vi tillader, før regex kører?\n\n- Hvilken gruppe indeholder en kvantifikator inde i en anden kvantifikator?\n\n- Kan to alternationsgrene forbruge samme præfiks?\n\n- Gør nogen log-redaktionsjob genbrug af dette mønster på ubundne linjer?\n\n- Hvem ejer omskrivningen, hvis tidsfæstring fejler næste måned?"
+      ]
+    },
+    {
+      "h2": "Erstatning af regex med kedeligt kode",
+      "paras": [
+        "Mange “clevere” valideringer er mere klare som split/join, URL-parsere eller små håndparsere. Kedeligt kode har lineær adfærd, som du kan læse. Jeg flytter strukturerede formater (UUID'er, datoer med faste former, simple tokens) væk fra regex, når mønsteret begynder at samle stjerner.",
+        "Regex vinder stadig for let lexing. Ærlighedsreglen er simpel: hvis du ikke kan forklare den værste-case-vækst, skal du ikke sætte det på anmodningsstien."
+      ]
+    },
+    {
+      "h2": "Operatørens noter til LLM-assisterede forges",
+      "paras": [
+        "Modeller som stakkekvantorer, fordi de ser præcise ud. Behandle hver forge som upålidelig, indtil heuristisk checkliste og tidsbaserede fixtures er godkendt. RegexProofs edge-case-opkald er en startfilter. Din CI-budget og input-kapsler er kontrollerne, der holder siden oppe.",
+        "Når du skriver statusopdateringer til interessenter, skal du nævne, hvad du har målt (fixturetid, input-kap), i stedet for at påstå komplet beskyttelse. Overpåstande skaber supportgæld, når det næste nye mønster opstår."
+      ]
+    },
+    {
+      "h2": "Feltnoter: levering uden overkrav",
+      "paras": [
+        "Jeg afviser statussprog, der siger, at et værktøj aldrig mangler dialektfejl eller ReDoS-former. Den ærlige linje er: vi kører fixtures i produktionsmotoren, vi begrænser indtastningslængden og vi gennemgår nestede kvantificatorer. Restrisikoen forbliver ejet af en navngivet person.",
+        "Denne holdning holder blogindlæg sammen med, hvad RegexProof faktisk sælger - en smedje med forklaringer og edge-case-flags - i stedet for en mytisk perfekt scanner. Læsere, der har brug for formel sikkerhed, har stadig brug for deres egen sikkerhedsreview.",
+        "Når du underviser en junior medarbejder, lad dem ødelægge en mønster på formål med en lang nærmis-string. At se CPU stige underviser hurtigere end en anden abstrakt advarsel. Derefter retter du mønstret og holder det fejlende fixture i CI, så lærepen holder.",
+        "Til sidst, hold primærkilderne bogmærket: ECMA-262 for JavaScript RegExp-adfærd, PCRE-dokumenter for gateway-regler og OWASP for ReDoS-trusselformellen. Værktøjer hjælper; kontrakten lever stadig i disse referencer. Det er også vigtigt at huske på andre vigtige standarder og lovgivning, såsom GDPR, WCAG, ARIA, ADA og ECMAScript, samt værktøjer som Waffo, for at sikre, at løsningerne er robuste og sikre."
+      ]
+    },
+    {
+      "h2": "Afslutning",
+      "paras": [
+        "Markér indlejrede kvantificatorer og overlappende alternation først, begræns indledningslængden og tid dine testdata i den rigtige motor. ReDoS er en fejl i programtilgængelighed forkleet som en clever mønster. Hold cleverness små nok til at forklare."
+      ]
+    },
+    {
+      "h2": "Lukning af løkken efter en langsom fixture",
+      "paras": [
+        "Når en tidsbegrænset fixture fejler, udvider jeg ikke budgettet først. Jeg omskriver nested gentagelse, tilføjer en inputbegrænsning eller flytter kontrollen uden for anmodningsstien. At udvide budgettet uden en omskrivning lærer systemet at acceptere langsomme mønstre.",
+        "Skriv før- og efter-tid for fixturen i billetten, så den næste reviewer ser forbedringen. Behold den fjendtlige streng i CI for evigt. Den ene vane forhindrer stille tilbageskridt, når nogen senere forenkler mønsteret uden at genkøre de lange tilfælde.",
+        "Behold de fjendtlige fixtures ved siden af mønsterfilen, så reviewers aldrig skal lede efter dem."
+      ]
+    },
+    {
+      "h2": "Referencer",
+      "paras": [
+        "- OWASP ReDoS\n\n- ECMA-262 RegExp\n\n- PCRE",
+        "Prøv produktet: RegexProof",
+        "2026-09-16 · primære kilder kun · ingen fabrikerede trafikmålinger"
+      ]
+    },
+    {
+      "h2": "Relaterede læsninger",
+      "paras": [
+        "- ecmascript-vs-pcre-dialect-traps-2026\n\n    - Den LX AI Micro-SaaS Emne Matrix"
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Hvad er RegexProof?",
+      "a": "RegexProof konverterer en naturlig-sproglig beskrivelse til et regex for den motor, du vælger, og forklarer derefter hver del og markerer kanter tilfælde."
+    },
+    {
+      "q": "Hvilke regex-smag er RegexProof kompatibelt med?",
+      "a": "Du vælger smagen — ECMAScript/JavaScript, PCRE og andre — og skal validere mod produktionens dialekt, ikke kun en paste-bin-tester."
+    },
+    {
+      "q": "Hvordan reducerer RegexProof ReDoS-risikoen?",
+      "a": "Det forklarer repetition og alternation og peger på mønstre, der er tilbøjelige til katastrofalt backtracking, rodårsagen til ReDoS (Regular-expression Denial of Service)."
+    },
+    {
+      "q": "Er RegexProof gratis?",
+      "a": "Den gratis kategori inkluderer 10 forges om måneden; Pro er 19 $/måned for højere volumen."
+    },
+    {
+      "q": "Hvorfor opfører ECMAScript og PCRE sig forskelligt?",
+      "a": "Lookbehind-understøttelse, unicode-tilstande og rekursive mønstre adskiller sig på tværs af motorer, så et mønster, der er gyldigt i PCRE, kan fejle eller opføre sig anderledes i JavaScript."
+    }
+  ],
+  "disclaimer": "Kun til beslutningsstøtte. Ikke en formel verificator eller komplethedsgaranti.",
+  "back": "Tilbage til blog"
+}

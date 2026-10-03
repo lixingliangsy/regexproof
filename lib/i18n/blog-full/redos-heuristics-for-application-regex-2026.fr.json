@@ -1,0 +1,141 @@
+{
+  "title": "Heuristiques ReDoS pour les expressions régulières d'application",
+  "eyebrow": "par RegexProof (LX AI)",
+  "lead": "Les quantificateurs imbriqués comme (a+)+ et les alternations chevauchantes sont des formes classiques de ReDoS. Lorsque les entrées utilisateur sont non fiables, préférez les moteurs ou les constructions qui limitent le retour en arrière et échouent en fermant les modèles que vous ne pouvez pas expliquer. OWASP documente la classe d'attaque ; votre travail est de garder ces formes hors des chemins de requête.",
+  "sections": [
+    {
+      "h2": "Ce qu'est ReDoS en termes d'application",
+      "paras": [
+        "Le ReDoS (Regular-expression Denial of Service) se produit lorsque une entrée conçue force le moteur de correspondance à effectuer un backtrack catastrophique. Les pics de CPU, les latences de requête explosent, et un seul point de terminaison peut affamer le processus. Ce n'est pas une trivialité théorique : n'importe quelle expression régulière sur une frontière HTTP, une ligne de journal ou un nom de téléchargement est un candidat si elle utilise des répétitions risquées.",
+        "Je commence par la page ReDoS d'OWASP, puis je la mappe sur nos routes (OWASP ReDoS). Le passage heuristique est intentionnellement ennuyeux : trouver des quantificateurs imbriqués, des alternations chevauchantes et des répétitions ambiguës sur des champs de saisie de grande taille.",
+        "Où cela mord d'abord",
+        "- Validateurs d'e-mail / URL / \"tag de texte libre\" sur les formulaires publics\n\n- Règles de pare-feu ou de passerelle qui réutilisent des modèles d'application\n\n- Regex de rédaction de journal exécuté sur chaque ligne\n\n- Validateurs \"stricts\" générés par LLM avec des étoiles et des pluses empilés"
+      ]
+    },
+    {
+      "h2": "Formes heuristiques à signaler immédiatement",
+      "paras": [
+        "Les quantificateurs imbriqués tels que (a+)+, (a*)*, ou (a+)* sont la forme classique. Les alternations chevauchantes comme (a|a)+ ou des préfixes partagés plus subtils créent la même explosion. Les groupes facultatifs enveloppés dans une répétition externe sont faciles à manquer lors de la revue parce qu'ils ont l'air propres.",
+        "Signalez également les modèles qui mélangent la répétition gourmande avec une condition de fin qui échoue souvent, car le moteur parcourt d'énormes arbres avant de rejeter. Si vous ne pouvez pas esquisser pourquoi la correspondance est linéaire, traitez-la comme coupable jusqu'à preuve du contraire.",
+        "Liste de contrôle — premier passage",
+        "- Tout quantificateur à l'intérieur d'un autre quantificateur sur la même chaîne de groupes\n\n- Branches d'alternation qui peuvent correspondre au même préfixe\n\n-.* ou.+ non bornés avant une littérale qui échoue sur des chaînes longues\n\n- Longueur de saisie contrôlée par l'utilisateur sans limite dure avant l'exécution du regex"
+      ]
+    },
+    {
+      "h2": "Flux de travail étape par étape avant que le modèle atteigne la production",
+      "paras": [
+        "- Limitez la longueur de l'entrée au niveau du framework avant l'exécution de l'expression régulière.\n\n- Créez des fixtures : chemins heureux courts, chaînes de caractères longues proches du cas de figure et quelques répétitions adverses.\n\n- Exécutez le modèle dans le moteur de production avec un budget temps (échouez au test si cela dépasse quelques millisecondes sur les cas longs).\n\n- Réécrivez la répétition imbriquée sous des formes plus claires et limitées — ou remplacez l'expression régulière par un analyseur pour les données structurées.\n\n- Documentez les risques résiduels lorsque vous devez conserver un modèle complexe, avec un propriétaire et une date d'examen.",
+        "RegexProof signale les répétitions risquées lorsqu'il explique une forge. C'est un premier passage, et non une preuve de sécurité sous chaque entrée."
+      ]
+    },
+    {
+      "h2": "Le choix du moteur comme contrôle",
+      "paras": [
+        "Certains déploiements déplacent les validateurs chauds vers des moteurs conçus pour éviter le backtrack catastrophique (garanties de style RE2). C'est un contrôle d'architecture, et non une modification de l'expression régulière. Si vous restez sur les moteurs de backtrack tels que les RegExp ECMAScript typiques ou PCRE, vous êtes responsable de l'examen du modèle. Lisez le dialecte que vous exécutez réellement : RegExp ECMA-262 pour JavaScript, PCRE pour de nombreuses passerelles.",
+        "Contrôle | Ce que cela vous apporte | Ce que cela n'achète pas\nLimite de longueur d'entrée | Limite le travail dans le pire des cas | Correction du modèle\nLinter heuristique pour les répétitions imbriquées +/* | Attrape les formes communes | Modèles lents nouveaux\nTests unitaires chronométrés | Signal de régression dans CI | Preuve contre tous les adversaires\nMoteur non backtrack | Supprime une classe entière de risques | Parité de fonctionnalités avec les jouets PCRE\nExamen humain de la sortie LLM | Arrête les quantificateurs empilés tôt | Garantie de perfection"
+      ]
+    },
+    {
+      "h2": "Erreurs courantes",
+      "paras": [
+        "- Supposer que « ce n'est qu'une validation » donc ReDoS ne s'applique pas\n\n- Copier une expression régulière stricte pour les e-mails avec répétition imbriquée parce qu'elle semble exhaustive\n\n- Exécuter des regex sur des corps de requête non limités\n\n- Faire confiance à une explication de générateur sans fixture chronométré\n\n- Affirmer « nous ne manquons jamais ReDoS » dans les textes de vente — cela surévalue"
+      ]
+    },
+    {
+      "h2": "Critères de décision : réécrire, relocaliser ou conserver",
+      "paras": [
+        "Réécrire lorsque le motif est lisible comme une petite machine à états ou des appels de bibliothèque de chaînes. Relocaliser lorsque vous avez besoin d'une correspondance riche mais pouvez la déplacer hors du thread de requête avec des délais d'attente stricts. Conserver uniquement lorsque les fixtures restent rapides sur des entrées proches du seuil et qu'un propriétaire accepte le risque résiduel en écriture."
+      ]
+    },
+    {
+      "h2": "Ce que ce n'est pas",
+      "paras": [
+        "Ces heuristiques ne constituent pas une preuve formelle, ne garantissent pas que RegexProof trouve tous les modèles dangereux et ne remplacent pas les limites d'entrée et les délais d'attente. Nous ne publions pas de comptes de failles inventés ou de revendications de « détection à 100 % ». Utilisez la liste de contrôle pour prioriser l'examen ; gardez OWASP et vos documents de moteur ouverts lorsque vous discutez d'une forme spécifique."
+      ]
+    },
+    {
+      "h2": "Comment je chronomètre les fixtures sans me mentir",
+      "paras": [
+        "Un examen ReDoS qui n'utilise que des chaînes de chemin heureux courts aura toujours l'air correct. Je garde un dossier d'entrées presque ratées : longues séries du caractère répété que le modèle aime, puis un remorqueur qui échoue. Le test échoue si la correspondance dépasse un petit budget en millisecondes sur le runner CI que nous utilisons réellement.",
+        "Si l'équipe ne peut pas se mettre d'accord sur un budget, commencez par une limite conservatrice et resserrez une fois que vous avez des références. L'objectif est un signal de régression, et noter un article scientifique. Associez le test chronométré à une limite de longueur d'entrée afin que la production ne voit jamais de jouets à l'échelle du megaoctet.",
+        "Exemples de questions d'examen",
+        "- Quelle est la plus longue entrée que nous autorisons avant que le regex s'exécute ?\n\n- Quel groupe imbrique un quantificateur à l'intérieur d'un autre quantificateur?\n\n- Deux branches d'alternance peuvent-elles consommer le même préfixe?\n\n- Un travail de rédaction de journal réutilise-t-il ce modèle sur des lignes non limitées?\n\n- Qui est responsable de la réécriture si le chronométrage échoue le mois prochain?"
+      ]
+    },
+    {
+      "h2": "Remplacement de regex par du code ennuyeux",
+      "paras": [
+        "De nombreux validateurs « intelligents » sont plus clairs lorsqu'ils sont réécrits en utilisant split/join, des analyseurs d'URL ou de petits analyseurs manuels. Le code ennuyeux a un comportement linéaire que l'on peut lire. Je déplace les formats structurés (UUID, dates avec des formes fixes, jetons simples) loin de regex lorsque le modèle commence à collecter des étoiles.",
+        "Regex est toujours gagnant pour le lexage léger. La règle d'honnêteté est simple : si vous ne pouvez pas expliquer la croissance dans le pire des cas, ne l'insérez pas dans le chemin de la requête."
+      ]
+    },
+    {
+      "h2": "Notes d'opérateur pour les forges assistées par LLM",
+      "paras": [
+        "Des modèles comme les quantificateurs empilés parce qu'ils semblent précis. Traitez chaque forge comme non fiable jusqu'à ce que la liste de contrôle heuristique et les fixtures temporisées passent. Les rappels de cas de bord de RegexProof sont un filtre de départ. Votre budget CI et les plafonds d'entrée sont les contrôles qui maintiennent le site actif.",
+        "Lorsque vous rédigez des mises à jour de statut pour les parties prenantes, dites ce que vous avez mesuré (temps de fixture, plafond d'entrée) au lieu de prétendre une protection complète. La surdéclaration crée une dette de support lorsque le prochain modèle novateur apparaît."
+      ]
+    },
+    {
+      "h2": "Notes de terrain : expédition sans surestimation",
+      "paras": [
+        "Je refuse le langage de statut qui dit qu'un outil ne manque jamais de bogues de dialecte ou de formes ReDoS. La ligne honnête est : nous exécutons des fixtures dans le moteur de production, nous limitons la longueur de l'entrée et nous examinons les quantificateurs imbriqués. Le risque résiduel reste la propriété d'une personne nommée.",
+        "Cette position maintient les billets de blog en phase avec ce que RegexProof vend réellement — une forge avec des explications et des indicateurs de cas de bordure — au lieu d'un scanner mythiquement parfait. Les lecteurs qui ont besoin d'une assurance formelle ont toujours besoin de leur propre examen de sécurité.",
+        "Lorsque vous enseignez à un junior, faites-le casser un motif intentionnellement avec une chaîne de presque correspondance longue. Regarder la montée du CPU enseigne plus vite qu'un autre avertissement abstrait. Ensuite, corrigez le motif et gardez le fixture défaillant dans CI pour que la leçon reste.",
+        "Enfin, gardez les sources primaires en signet : ECMA-262 pour le comportement JavaScript RegExp, les documents PCRE pour les règles de passerelle et OWASP pour le modèle de menace ReDoS. Les outils aident ; le contrat vit toujours dans ces références."
+      ]
+    },
+    {
+      "h2": "Fermeture",
+      "paras": [
+        "Indiquez d'abord les quantificateurs imbriqués et l'alternance chevauchante, limitez la longueur de l'entrée, puis chronométrez vos fixtures dans le moteur réel. ReDoS est un bogue d'availability d'application déguisé en motif ingénieux. Gardez l'ingéniosité suffisamment petite pour l'expliquer."
+      ]
+    },
+    {
+      "h2": "Fermer la boucle après un fixture lent",
+      "paras": [
+        "Lorsqu'un fixture chronométré échoue, je n'élargis pas d'abord le budget. Je réécris la répétition imbriquée, j'ajoute une limite d'entrée ou je déplace la vérification en dehors du chemin de la requête. Élargir le budget sans réécrire enseigne au système à accepter des modèles lents.",
+        "Écrivez les temps de fixture avant et après dans le ticket afin que le prochain réviseur voie l'amélioration. Conservez la chaîne adverse dans CI pour toujours. Cette seule habitude empêche les régressions silencieuses lorsque quelqu'un simplifie plus tard le modèle sans réexécuter les cas longs.",
+        "Conservez les fixtures adverses à côté du fichier de modèle afin que les réviseurs ne les cherchent jamais."
+      ]
+    },
+    {
+      "h2": "Références",
+      "paras": [
+        "- ReDoS d'OWASP\n\n- RegExp ECMA-262\n\n- PCRE",
+        "Essayez le produit : RegexProof",
+        "2026-09-16 · sources primaires uniquement · pas de métriques de trafic fabriquées. Assurez-vous de respecter les normes WCAG, ARIA, GDPR, Waffo et ADA pour l'accessibilité et la conformité."
+      ]
+    },
+    {
+      "h2": "Lectures connexes",
+      "paras": [
+        "- ecmascript-vs-pcre-dialect-traps-2026\n\n    - La matrice de sujets LX AI Micro-SaaS"
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Qu'est-ce que RegexProof?",
+      "a": "RegexProof convertit une description en langage naturel en une expression régulière pour le moteur de votre choix, puis l'explique partie par partie et signale les cas limites."
+    },
+    {
+      "q": "Quels sont les saveurs de regex que RegexProof prend en charge?",
+      "a": "Vous choisissez la saveur — ECMAScript/JavaScript, PCRE et d'autres — et devriez valider contre le dialecte de production, et non seulement un testeur de paste-bin."
+    },
+    {
+      "q": "Comment RegexProof réduit-il le risque ReDoS?",
+      "a": "Il explique la répétition et l'alternance et signale les modèles sensibles à un retour en arrière catastrophique, la cause profonde de ReDoS (Denial of Service d'expression régulière)."
+    },
+    {
+      "q": "RegexProof est-il gratuit?",
+      "a": "Le niveau gratuit comprend 10 forges par mois ; Pro est à 19 $/mo pour un volume plus élevé."
+    },
+    {
+      "q": "Pourquoi ECMAScript et PCRE se comportent-ils différemment?",
+      "a": "Le support de lookbehind, les modes Unicode et les modèles récursifs diffèrent entre les moteurs, donc un modèle valide dans PCRE peut échouer ou se comporter différemment dans JavaScript."
+    }
+  ],
+  "disclaimer": "Support de décision uniquement. Pas de vérificateur formel ou de garantie de complétude.",
+  "back": "Retour au blog"
+}

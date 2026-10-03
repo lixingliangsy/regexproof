@@ -80,7 +80,7 @@ function buildDemoSteps(): DemoStep[] {
     },
     {
       title: 'Your turn',
-      detail: `Try the live studio, or start free with ${name}.`,
+      detail: `Try the live studio, or Get started with ${name}.`,
     },
   ]
 }
@@ -290,7 +290,7 @@ export default function Home() {
 </nav>
             <div className="hidden md:flex gap-3">
               <a href="#signup" className="px-4 py-2 rounded-full border border-slate-200 font-semibold text-sm">Sign in</a>
-              <a href="#signup" className="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold text-sm">Start free trial</a>
+              <a href="#signup" className="px-4 py-2 rounded-full bg-indigo-600 text-white font-semibold text-sm">Subscribe</a>
             </div>
             <button type="button" className="md:hidden p-2" aria-label="Menu" onClick={() => setMenuOpen((v) => !v)}>
               <span className="block w-6 h-0.5 bg-slate-900 mb-1" />
@@ -302,7 +302,7 @@ export default function Home() {
             <div className="md:hidden px-6 pb-4 flex flex-col gap-2 border-b border-slate-200">
               {['features', 'how', 'studio', 'pricing', 'faq', 'signup'].map((id) => (
                 <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)} className="py-2 font-semibold text-slate-600 capitalize">
-                  {id === 'signup' ? 'Start free trial' : id}
+                  {id === 'signup' ? 'Subscribe' : id}
                 </a>
               ))}
             </div>
@@ -316,7 +316,7 @@ export default function Home() {
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">{PRODUCT.tagline}</h1>
               <p className="text-lg text-slate-600 mb-6">{PRODUCT.description}</p>
               <div className="flex flex-wrap gap-3">
-                <a href="#signup" className="px-6 py-3 rounded-full bg-indigo-600 text-white font-bold">Start Free Trial</a>
+                <a href="#signup" className="px-6 py-3 rounded-full bg-indigo-600 text-white font-bold">Subscribe</a>
                 <button type="button" onClick={openDemo} className="px-6 py-3 rounded-full border border-slate-200 font-bold bg-white">
                   ▶ Watch Demo
                 </button>
@@ -490,8 +490,8 @@ export default function Home() {
                   <li className="flex gap-2"><Check /> Limited daily AI runs (10/day · 50/mo)</li>
                   <li className="flex gap-2"><Check /> Studio demo (no extra LLM fee)</li>
                 </ul>
-                <button type="button" className="w-full py-3 rounded-full border border-slate-200 font-bold" onClick={() => document.getElementById('signup')?.scrollIntoView({ behavior: 'smooth' })}>
-                  Get started free
+                <button type="button" className="w-full py-3 rounded-full border border-slate-200 font-bold" onClick={() => document.getElementById('studio')?.scrollIntoView({ behavior: 'smooth' })}>
+                  Try it on this page
                 </button>
               </div>
               <div className="rounded-2xl border-2 border-indigo-600 p-6 relative shadow-lg">
@@ -507,7 +507,7 @@ export default function Home() {
                   <li className="flex gap-2"><Check /> Priority support · Yearly ${priceYearly}</li>
                 </ul>
                 <a href="/api/checkout" onClick={(e) => goCheckout('/api/checkout', e)} className="block text-center w-full py-3 rounded-full bg-indigo-600 text-white font-bold">
-                  Start free trial
+                  Get Pro
                 </a>
                 <a href="/api/checkout?cycle=yearly" onClick={(e) => goCheckout('/api/checkout?cycle=yearly', e)} className="block text-center mt-3 text-sm font-semibold text-indigo-600">
                   Or pay yearly
@@ -733,7 +733,7 @@ export default function Home() {
                     className="px-4 py-2 rounded-full border border-slate-200 font-bold"
                     onClick={() => setDemoOpen(false)}
                   >
-                    Start free
+                    Create my account
                   </a>
                 </div>
               </div>

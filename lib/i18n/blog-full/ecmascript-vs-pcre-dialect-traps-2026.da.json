@@ -1,0 +1,134 @@
+{
+  "title": "ECMAScript vs PCRE-dialektfælder",
+  "eyebrow": "af RegexProof (LX AI)",
+  "lead": "Lookbehind-understøttelse, Unicode-tilstande og rekursive mønstre adskiller sig mellem motorer. Et mønster, der kan kompilere i PCRE, kan kaste eller matche anderledes i JavaScript. Valider altid mod produktionsdialekten i samme flags og Unicode-tilstand, du vil udgive — en paste-bin-tester på en anden motor er ikke nok.",
+  "sections": [
+    {
+      "h2": "Hvorfor dialect fælder viser sig i virkelige apps",
+      "paras": [
+        "De fleste teams lærer en smag godt og indsætter mønstre på tværs af stacks. En backend, der bruger PCRE-stilfunktioner (rekursive undermønstre, visse lookbehind-former, possessive kvantificatorer), vil gerne acceptere et mønster, som browseren ikke engang kan parse. Det omvendte sker også: et JavaScript u-flag Unicode-mønster opfører sig anderledes, når nogen overfører det til en byte-orienteret PCRE-bygning uden de samme Unicode-egenskaber.",
+        "Jeg behandler dialekt som en del af kontrakten, på samme måde som jeg behandler SQL-dialekt. Hvis runtime er ECMAScript RegExp, er kildefilen den officielle ECMA-262 RegExp-sektion. Hvis runtime er PCRE, er kildefilen PCRE-dokumentationen. Testere, der stille skifter motorer, skjuler fejlen, indtil den når produktionen.",
+        "Hvor uoverensstemmelsen normalt kommer ind",
+        "- Fælles „valideringsbibliotek“-klip, der er kopieret fra Stack Overflow uden en motor-tag\n\n- CI, der kører Python re, mens edge-gatewayen kører JavaScript\n\n- WAF eller log-parsere, der bruger PCRE, mens app-formen bruger ECMAScript\n\n- LLM-genereret regex, der som standard bruger PCRE-ish syntaks, medmindre du fastgør smagen"
+      ]
+    },
+    {
+      "h2": "Forskelle i lookbehind og lookaround",
+      "paras": [
+        "Variabel-længde lookbehind er en klassisk fælde. Motorer er uenige om, hvilke længder der er lovlige, og nogle ældre JavaScript-motorer manglede lookbehind helt. Selv når begge sider understøtter lookbehind, kan sættet af tilladte mønstre inde i påstandene være forskellige. Hvis din gate afhænger af, at 'forrige token skal være X', skriv en enhedstest i produktionsmotoren, ikke i en PCRE-legeplads.",
+        "Lookahead er mere bredt delt, men kombination af lookaround med nestede kvantificatorer øger ReDoS-risikoen. Dialektsikkerhed og afvisning af tjenestesikkerhed er separate kontroller; bestå en og du kan stadig fejle den anden. OWASP's ReDoS-noter forbliver den praktiske checklist for den anden kontrol (OWASP ReDoS).",
+        "Praktisk regel",
+        "Hvis en funktion ikke er i ECMA-262 RegExp, skal den ikke sendes til browseren. Hvis du har brug for PCRE-kun-funktioner, hold mønsteret på PCRE-siden og returner en boolesk værdi eller normaliseret token til JavaScript i stedet for at sende det rå mønster."
+      ]
+    },
+    {
+      "h2": "Unicode-tilstande og tegnklasser",
+      "paras": [
+        "Unicode-ejendomsmæssige undtagelser, astral-plane-tegn og casesammenfald afhænger af flags og motor-Unicode-tabeller. En mønster skrevet med JavaScript u-flag er ikke det samme objekt som en PCRE-mønster med UTF-tilstand aktiveret under forskellige indstillinger. Dot-all/enkelt-linje-adfærd adskiller sig også i navngivning og standarder på tværs af smag.",
+        "Når jeg gennemgår genererede mønstre, stiller jeg tre spørgsmål: hvilke tegnkoder skal matche, hvilke skal ikke, og om mønstret antager BMP-kun-tekst. E-mail, emoji og CJK-indtastning er, hvor stille uoverensstemmelser optræder.",
+        "Checkliste — Unicode",
+        "- Optegn de nøjagtige flags, der bruges i produktion (i, m, s/dotAll, u, v hvor tilgængeligt)\n\n- Inkluder mindst én astral-plane-fikspunkt, hvis brugertekst kan indeholde emoji\n\n- Undgå at antage, at \\w betyder \"bogstaver i hvert sprog\"\n\n- Foretræk eksplisitte områder eller ejendomsmæssige undtagelser, som du har verificeret i-motoren"
+      ]
+    },
+    {
+      "h2": "Recursion, backreferences og \"hjælpsomme\" PCRE-funktioner",
+      "paras": [
+        "Rekursive mønstre og nogle subroutine-kald er PCRE-styrker. ECMAScript RegExp giver dig ikke det samme værktøjskammer. Generatore, der emitterer mønstre med balancerede afgrænsere med rekursion, vil fejle, når forbrugeren er JavaScript. Atomare grupper og possessive kvantificatorer er endnu en PCRE-komfort, som JavaScript mangler i samme form.",
+        "Backreference-adfærd omkring fejlede grupper og tomme matches kan også overraske personer, der flytter mønstre mellem motorer. Fejltillstandsmodus er sjældent et crash; det er en stille forkert accept eller afvisning på kantinddata.",
+        "Funktion | ECMAScript RegExp | PCRE (typisk) | Skibsregel\nVariabel længde lookbehind | Begrænset / motorversion-afhængig | Bedre support | Test i målmotor\nRekursive undermønstre | Ikke tilgængelig | Tilgængelig | Hold kun serverside\nPossessive / atomare | Ikke det samme værktøjskammer | Tilgængelig | Indsæt ikke i JS\nUnicode-ejendom-undslag | Med u/v | Med UTF + muligheder | Match flags eksplitt\nNavngivne grupper | Understøttet i moderne motorer | Understøttet | Verificer stadig erstatningssyntaks"
+      ]
+    },
+    {
+      "h2": "Trin-for-trin-arbejdsgang, som jeg bruger før jeg sender en mønster",
+      "paras": [
+        "- Skriv først accept- og afvisnings eksempler (fem af hver er nok til at starte).\n\n- Fastgør motoren og flagene i billettitlen (eksempel: \"ECMAScript, flag u + i\").\n\n- Generer eller skriv mønsteret til denne motor alene.\n\n- Kør fixtures i samme runtime, som brugeren rammer (browser-bygning eller Node-version, du deployer).\n\n- Scan for nested kvantorer og overlappende alternation (ReDoS-pas).\n\n- Kun derefter indsæt i en anden motor, hvis du virkelig har brug for dobbelt runtime — forvent redigeringer.",
+        "RegexProof er bygget til at holde smagvalget eksplicit og til at forklare grupper, før du indsætter. Det erstatter ikke kørsel af fixtures i din staging-binar."
+      ]
+    },
+    {
+      "h2": "Almindelige fejl",
+      "paras": [
+        "- At stole på en grøn test på regex101 med det forkerte smag valgt\n\n- At dele en mønster på tværs af WAF (PCRE) og frontend (ECMAScript) uden dobbeltte fixtures\n\n- At lade en LLM emit lookbehind eller rekursion uden at angive motoren\n\n- At behandle \"det compiled\" som \"det matcher hvad vi mener\"\n\n- At springe ReDoS gennemgang over, fordi mønsteret er \"kun til validering\""
+      ]
+    },
+    {
+      "h2": "Beslutningskriterier: en motor eller to",
+      "paras": [
+        "Forbliv på en motor, når mønsterstyret brugerinddata er på ét niveau. Split motorer kun, når du har to ejere, to fikseringsfiler og en dokumenteret mapping. Dual-motor \"del samme streng\" er, hvordan dialektfælder bliver til incidenter."
+      ]
+    },
+    {
+      "h2": "Hvad dette ikke er",
+      "paras": [
+        "Denne artikel er ikke en fuld sammenligning af hver enkelt regex-smag, ikke en garanti for, at RegexProof (eller noget værktøj) fanger hver enkelt dialektfejl, og ikke et krav på, at passerende fixtures betyder, at mønsteret er sikkert under fjendtlig belastning. Vi opfinder ikke kundemetrics. Brug det som en operatør checklist; hold ECMA-262 og PCRE-dokumenter åbne, når du diskuterer edge cases og overholdelse af GDPR, ADA og Waffo-krav samt sikkerhed i forhold til ReDoS og ECMAScript."
+      ]
+    },
+    {
+      "h2": "Hvordan mapper jeg en billet til en motor kontrakt",
+      "paras": [
+        "Hver regex-billet skal navngive runtime på samme måde, som vi navngiver en database: \"Node 20 ECMAScript RegExp, flags u+i\" eller \"gateway PCRE2 UTF, ingen rekursion.\" Uden denne linje diskuterer anmelderne om smag i stedet for kontrakter. Jeg indsætter motorlinjen i PR-beskrivelsen og i fixture-filheaderen, så CI og mennesker deler samme historie.",
+        "Når produktet beder om \"samme regel i browseren og på kanten\", deler jeg arbejdet op i to mønstre med to fixture-filer. Fælles intention er okay, men fælles ikke-verificerede streng er ikke okay. Omkostningerne ved at vedligeholde to små mønstre er lavere end omkostningerne ved en dialekt-episode på en login- eller checkout-felt.",
+        "Skabelon for PR-beskrivelsen",
+        "- Motor + version + flags\n\n- Fem accept-fixture og fem reject-fixture (råde streng, ikke paraphraseringer)\n\n- Maksimum indlængde tvunget før matcher kører\n\n- ReDoS-note: nestede kvantificatorer gennemgået ja/nej\n\n- Ejer af restrisikoen, hvis mønsteret skal forblive komplekst"
+      ]
+    },
+    {
+      "h2": "LLM-genereret regex: fastlæg smagen i prompten",
+      "paras": [
+        "Hvis du beder en model om en \"regex til emails\" uden at nævne ECMAScript eller PCRE, får du ofte et PCRE-smag answer med lookbehind eller possessive vaner. RegexProof tvinger en smagvalg af denne grund. Kør alligevel fixtures i din binær; en ren forklaring er ikke et grønt CI-job.",
+        "Jeg forbinder også cross-pasting fra chatlogs til produktion uden en anden menneske, der kan forklare hver gruppe. Fejltillægget er ikke dramatiske syntaksfejl - det er stille forkerte accepter på Unicode-kanttilfælde uger senere."
+      ]
+    },
+    {
+      "h2": "Operatørbemærkninger fra shipping micro-SaaS-formularer",
+      "paras": [
+        "Offentlige formularer tiltrækker underlige Unicode, nul-bredde-tegn og indsætninger fra kontorpakker. Dialektfælder viser sig som “virker på min laptop”, fordi laptop-testeren brugte en anden motor end kantnoden. Hold én staging-vært, der spejler produktionsregex-flags nøjagtigt.",
+        "Når en kunde rapporterer en falsk afvisning, bed om de præcise kodepunkter (en hex-dump af strengen) før du “fixer” mønsteret. Mange dialektfejl er usynlige i skærmbilleder."
+      ]
+    },
+    {
+      "h2": "Afslutning",
+      "paras": [
+        "Fastgør dialekten, skriv testdata i denne dialekt, og bekymrer sig derefter om elegance. Den dyre fejl er mønsteret, der fungerer i den forkerte tester. Hold produktionsmotoren ærlig, og behandle cross-engine indsætning som en porteringopgave med sin egen gennemgang."
+      ]
+    },
+    {
+      "h2": "Referencer",
+      "paras": [
+        "- ECMA-262 RegExp\n\n- PCRE\n\n- OWASP ReDoS",
+        "Prøv produktet: RegexProof",
+        "2026-09-16 · kun primærkilder · ingen fabrikerede trafikmål"
+      ]
+    },
+    {
+      "h2": "Relaterede læsninger",
+      "paras": [
+        "- redos-heuristics-for-application-regex-2026\n\n    - Den LX AI Micro-SaaS Emne Matrix"
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Hvad er RegexProof?",
+      "a": "RegexProof konverterer en naturlig-sprog beskrivelse til et regex for den motor, du vælger, og forklarer det del for del og markerer kanttilfælde."
+    },
+    {
+      "q": "Hvilke regex-smag understøtter RegexProof?",
+      "a": "Du vælger smagen — ECMAScript/JavaScript, PCRE og andre — og skal valideres mod produktionsdialekten, ikke kun en paste-bin-tester."
+    },
+    {
+      "q": "Hvordan reducerer RegexProof ReDoS-risikoen?",
+      "a": "Det forklarer gentagelse og alternation og peger på mønstre, der er tilbøjelige til katastrofalt backtracking, rodårsagen til ReDoS (Regular-expression Denial of Service)."
+    },
+    {
+      "q": "Er RegexProof gratis?",
+      "a": "Den gratis konto inkluderer 10 forges om måneden; Pro er 19 $/måned for højere volumen."
+    },
+    {
+      "q": "Hvorfor opfører ECMAScript og PCRE sig anderledes?",
+      "a": "Lookbehind-understøttelse, Unicode-tilstande og rekursive mønstre adskiller sig mellem motorer, så et mønster, der er gyldigt i PCRE, kan fejle eller opføre sig anderledes i JavaScript."
+    }
+  ],
+  "disclaimer": "Beslutningsstøtte kun. Ikke en formel verificator eller komplethedsgaranti.",
+  "back": "Tilbage til blog"
+}

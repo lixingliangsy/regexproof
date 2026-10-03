@@ -21,6 +21,29 @@ export const PRODUCT = {
   resultLabel: "Your regex",
   ctaLabel: "Forge regex",
   definitionLead: "RegexProof reviews regular expressions for ReDoS and dialect pitfalls with deterministic heuristics plus optional model-assisted explanations — not a completeness guarantee.",
+  geoLongTail: [
+    "what is RegexProof",
+    "how does RegexProof work",
+    "how much does RegexProof cost",
+    "is RegexProof free",
+    "RegexProof vs doing it manually",
+  ],
+  geoQuickAnswer: [
+    "NL description to regex",
+    "Pick your language flavor",
+    "Part-by-part explanation",
+    "Edge cases called out",
+    "Pricing starts at $0 (Free).",
+  ],
+  geoComparison: {
+    vsManual: [
+      ["Speed", "Minutes per run", "Hours to days"],
+      ["Consistency", "Same ruleset every run", "Varies by person"],
+      ["Output", "Structured, exportable result", "Free-form"],
+      ["Best for", "First-pass decision-support", "Final sign-off"],
+    ],
+    whenNotToUse: "Use qualified human review instead — heuristics catch common patterns; novel attacks may be missed.",
+  },
   geoFaq: [
     { q: "What is ReDoS?", a: "Regular expression Denial of Service from catastrophic backtracking; see OWASP ReDoS guidance." },
     { q: "Which dialects?", a: "Notes cover JavaScript/ECMAScript, Python, Go, PCRE, and Rust differences at a high level." },
@@ -28,7 +51,9 @@ export const PRODUCT = {
     { q: "Demo mode?", a: "Explicit Demo returns labelled results without live AI." },
     { q: "Does it rewrite my regex?", a: "It suggests safer patterns and notes; you decide what to ship." },
     { q: "Primary sources?", a: "OWASP ReDoS community page and ECMA-262 regular expression semantics." },
-  ],
+  { q: "Which countries and regions can I use RegexProof in?", a: "As a cloud web app, RegexProof is reachable from any country with internet access; there is no region lock by default. Payment availability via our merchant of record (Waffo Pancake) may vary by processor and region." },
+  { q: "Is RegexProof GDPR and privacy compliant?", a: "Your inputs are used only to generate your output and are never sold. Retention, sub-processors, and your rights are described on our Privacy page; Enterprise plans can include a DPA and NDA on request." },
+  { q: "What languages does RegexProof support?", a: "The interface and generated results are in English. You can paste input in other major languages wherever the underlying model understands them." }],
   features: [
   "NL description to regex",
   "Pick your language flavor",
@@ -63,17 +88,22 @@ export const PRODUCT = {
 ] as InputField[],
   systemPrompt: "You are a regular-expression expert. Given a plain-English description, a target language flavor, and optional test strings, produce a correct regex in a fenced block, then explain each significant part, and list 2-3 edge cases the user must consider. Prefer readable, anchored patterns. In demo (mock) mode, return a realistic sample regex and explanation following exactly this structure.",
   pricing: [
-  {
-    "tier": "Free",
-    "price": "$0",
-    "desc": "10 forges/mo"
-  },
-  {
-    "tier": "Pro",
-    "price": "$19/mo",
-    "desc": "Unlimited, save history"
-  }
-],
+    {
+      "tier": "Free",
+      "price": "$0",
+      "desc": "1 workflow run / day · watermarked export"
+    },
+    {
+      "tier": "Pro",
+      "price": "$19/mo",
+      "desc": "300 workflow runs / mo · audit log · export"
+    },
+    {
+      "tier": "Enterprise",
+      "price": "Custom",
+      "desc": "SSO-ready · BYOK · higher caps · shared rulesets"
+    }
+  ],
   mock: (inputs: Record<string, string>): string => {
   const d = (inputs['description'] || '').trim()
   const lang = inputs['language'] || 'JavaScript'

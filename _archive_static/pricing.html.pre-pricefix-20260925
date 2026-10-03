@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="RegexProof pricing — Free with 10 forges per month, or Pro at $19/mo (or $190/year) for unlimited forges and saved history. Simple, transparent, no surprises.">
+<meta name="theme-color" content="#2563EB">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Pricing · RegexProof">
+<meta property="og:description" content="Free with 10 forges/month, or Pro at $19/mo ($190/yr) for unlimited forges and saved history.">
+<meta property="og:image" content="https://regexproof.lxsaihub.com/og-cover.svg">
+<meta property="og:url" content="https://regexproof.lxsaihub.com/pricing.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pricing · RegexProof">
+<meta name="twitter:description" content="Free with 10 forges/month, or Pro at $19/mo ($190/yr).">
+<meta name="twitter:image" content="https://regexproof.lxsaihub.com/og-cover.svg">
+<link rel="canonical" href="https://regexproof.lxsaihub.com/pricing.html">
+<link rel="alternate" type="text/plain" href="https://regexproof.lxsaihub.com/llms.txt" title="LLM manifest">
+<title>Pricing · RegexProof</title>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "RegexProof",
+  "description": "Free with 10 forges per month, or Pro at $19/mo ($190/yr) for unlimited forges and saved history.",
+  "image": "https://regexproof.lxsaihub.com/og-cover.svg",
+  "brand": { "@type": "Brand", "name": "RegexProof" },
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Free",
+      "price": "0",
+      "priceCurrency": "USD",
+      "description": "10 forges per month"
+    },
+    {
+      "@type": "Offer",
+      "name": "Pro (monthly)",
+      "sku": "PROD_4osRRrPi6TMkmWSEjKCau9",
+      "price": "19",
+      "priceCurrency": "USD",
+      "description": "Unlimited forges, save history",
+      "priceSpecification": { "@type": "UnitPriceSpecification", "priceCurrency": "USD", "price": "19", "unitCode": "MON" },
+      "url": "/api/checkout?cycle=monthly"
+    },
+    {
+      "@type": "Offer",
+      "name": "Pro (yearly)",
+      "sku": "PROD_1tyyDyafIYHH4ILyO06r5w",
+      "price": "190",
+      "priceCurrency": "USD",
+      "description": "Unlimited forges, save history — billed annually",
+      "priceSpecification": { "@type": "UnitPriceSpecification", "priceCurrency": "USD", "price": "190", "unitCode": "ANN" },
+      "url": "/api/checkout?cycle=monthly"
+    }
+  ]
+}
+</script>
+<style>
+  :root{
+    --blue-50:#EFF6FF;  --blue-100:#DBEAFE; --blue-200:#BFDBFE;
+    --blue-500:#3B82F6; --blue-600:#2563EB; --blue-700:#1D4ED8;
+    --orange-50:#FFF7ED; --orange-600:#EA580C; --orange-700:#C2410C;
+    --slate-50:#F8FAFC; --slate-100:#F1F5F9; --slate-200:#E2E8F0;
+    --slate-300:#CBD5E1; --slate-400:#94A3B8; --slate-500:#64748B;
+    --slate-600:#475569; --slate-700:#334155; --slate-800:#1E293B; --slate-900:#0F172A;
+    --surface:#FFFFFF; --surface-alt:#F8FAFC;
+    --text:#0F172A; --text-secondary:#475569; --text-muted:#64748B;
+    --border:#E2E8F0; --border-strong:#CBD5E1;
+    --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+    --space-5:24px; --space-6:32px; --space-8:48px; --space-10:64px; --space-12:96px;
+    --fs-overline:12px; --fs-caption:14px; --fs-body:16px;
+    --fs-h3:20px; --fs-h2:24px; --fs-h1:32px; --fs-display:40px;
+    --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-pill:999px;
+    --shadow-sm:0 1px 2px rgba(15,23,42,.06),0 1px 3px rgba(15,23,42,.08);
+    --shadow-md:0 4px 6px -2px rgba(15,23,42,.06),0 10px 15px -3px rgba(15,23,42,.10);
+    --shadow-lg:0 10px 25px -5px rgba(15,23,42,.12),0 8px 10px -6px rgba(15,23,42,.06);
+    --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --container:1120px; --header-h:64px;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+  body{margin:0;font-family:var(--font-sans);font-size:var(--fs-body);line-height:1.6;
+       color:var(--text);background:var(--surface);-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,h4,p,figure,ul,ol{margin:0;}
+  ul,ol{padding:0;list-style:none;}
+  a{color:var(--blue-700);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  img,svg{display:block;max-width:100%;}
+  button{font:inherit;color:inherit;cursor:pointer;}
+
+  .skip-link{position:absolute;left:var(--space-4);top:-100px;z-index:200;
+    background:var(--blue-700);color:#fff;padding:10px 16px;border-radius:var(--radius-md);transition:top .2s ease;}
+  .skip-link:focus{top:var(--space-4);}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+  :focus-visible{outline:3px solid var(--blue-600);outline-offset:2px;border-radius:var(--radius-sm);}
+
+  .container{width:100%;max-width:var(--container);margin-inline:auto;padding-inline:var(--space-4);}
+  .section{padding-block:var(--space-10);}
+  .section--alt{background:var(--surface-alt);}
+  .section-head{max-width:680px;margin-inline:auto;text-align:center;margin-bottom:var(--space-8);}
+  .eyebrow{display:inline-flex;align-items:center;gap:var(--space-2);
+    font-size:var(--fs-overline);font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--blue-700);background:var(--blue-50);padding:6px 12px;border-radius:var(--radius-pill);}
+  .eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--orange-600);}
+  h1,h2,h3{line-height:1.2;color:var(--slate-900);font-weight:800;letter-spacing:-.01em;}
+  h1{font-size:var(--fs-display);} h2{font-size:var(--fs-h2);} h3{font-size:var(--fs-h3);font-weight:700;}
+  .lead{font-size:var(--fs-h3);color:var(--text-secondary);line-height:1.5;margin-top:var(--space-4);}
+  .section-head p{color:var(--text-secondary);margin-top:var(--space-4);font-size:var(--fs-caption);}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);
+    min-height:44px;padding:0 22px;border:1px solid transparent;border-radius:var(--radius-md);
+    font-size:var(--fs-body);font-weight:600;line-height:1;white-space:nowrap;
+    transition:background .18s ease,border-color .18s ease,transform .18s ease;}
+  .btn:hover{text-decoration:none;}
+  .btn-primary{background:var(--blue-600);color:#fff;}
+  .btn-primary:hover{background:var(--blue-700);}
+  .btn-secondary{background:var(--surface);color:var(--blue-700);border-color:var(--border-strong);}
+  .btn-secondary:hover{background:var(--slate-50);border-color:var(--slate-400);}
+  .btn-ghost{background:transparent;color:var(--blue-700);min-height:44px;padding:0 12px;}
+  .btn-ghost:hover{text-decoration:underline;}
+  .btn-lg{min-height:52px;padding:0 28px;font-size:var(--fs-h3);}
+  .btn-block{width:100%;}
+  .btn:active{transform:translateY(1px);}
+
+  .site-header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.92);
+    backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid transparent;
+    transition:box-shadow .2s ease,border-color .2s ease;}
+  .site-header.scrolled{box-shadow:var(--shadow-sm);border-color:var(--border);}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:var(--header-h);}
+  .brand{display:inline-flex;align-items:center;gap:var(--space-2);font-weight:800;
+    font-size:var(--fs-h3);color:var(--slate-900);letter-spacing:-.02em;}
+  .brand:hover{text-decoration:none;}
+  .brand .logo{width:32px;height:32px;flex:none;}
+  .nav-links{display:none;align-items:center;gap:var(--space-2);}
+  .nav-links a.nav-link{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;
+    color:var(--slate-700);font-weight:600;font-size:var(--fs-caption);border-radius:var(--radius-md);}
+  .nav-links a.nav-link:hover{background:var(--slate-50);text-decoration:none;color:var(--slate-900);}
+  .nav-links a[aria-current="page"]{color:var(--blue-700);}
+  .nav-actions{display:flex;align-items:center;gap:var(--space-2);}
+  .hamburger{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;
+    border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--surface);}
+  .hamburger svg{width:22px;height:22px;}
+  .mobile-menu{display:none;flex-direction:column;gap:var(--space-1);padding:var(--space-3) var(--space-4) var(--space-5);
+    border-bottom:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-md);}
+  .mobile-menu.open{display:flex;}
+  .mobile-menu a{display:flex;align-items:center;min-height:48px;padding:0 12px;border-radius:var(--radius-md);
+    color:var(--slate-700);font-weight:600;}
+  .mobile-menu a:hover{background:var(--slate-50);text-decoration:none;}
+  .mobile-menu a[aria-current="page"]{color:var(--blue-700);background:var(--blue-50);}
+  .mobile-menu .btn{width:100%;margin-top:var(--space-2);}
+
+  /* ===== Pricing ===== */
+  .billing-toggle{display:inline-flex;align-items:center;gap:var(--space-2);margin-top:var(--space-6);
+    background:var(--slate-100);border-radius:var(--radius-pill);padding:var(--space-1);}
+  .billing-toggle button{border:none;background:transparent;color:var(--slate-600);font-weight:700;
+    min-height:44px;padding:0 20px;border-radius:var(--radius-pill);display:inline-flex;align-items:center;gap:var(--space-2);}
+  .billing-toggle button[aria-pressed="true"]{background:var(--surface);color:var(--blue-700);
+    box-shadow:var(--shadow-sm);}
+  .save-badge{font-size:var(--fs-overline);font-weight:800;letter-spacing:.04em;
+    background:var(--orange-50);color:var(--orange-700);padding:3px 8px;border-radius:var(--radius-pill);}
+  .pricing-grid{display:grid;gap:var(--space-5);align-items:start;}
+  .plan{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+    padding:var(--space-6);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:var(--space-4);}
+  .plan.featured{border-color:var(--blue-600);box-shadow:var(--shadow-md);position:relative;}
+  .plan.featured::before{content:"Most popular";position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+    background:var(--blue-600);color:#fff;font-size:var(--fs-overline);font-weight:800;
+    letter-spacing:.04em;padding:5px 14px;border-radius:var(--radius-pill);white-space:nowrap;}
+  .plan h3{font-size:var(--fs-h3);}
+  .plan .tagline{color:var(--text-muted);font-size:var(--fs-caption);margin-top:calc(-1*var(--space-2));}
+  .price{display:flex;align-items:baseline;gap:var(--space-1);}
+  .price .currency{font-size:var(--fs-h3);font-weight:800;color:var(--slate-900);}
+  .price .amount{font-size:48px;font-weight:800;line-height:1;color:var(--slate-900);letter-spacing:-.02em;}
+  .price .period{font-size:var(--fs-caption);color:var(--text-muted);font-weight:600;}
+  .price-note{font-size:var(--fs-caption);color:var(--text-muted);min-height:20px;}
+  .feature-list{display:flex;flex-direction:column;gap:var(--space-3);}
+  .feature-list li{display:flex;gap:var(--space-3);align-items:flex-start;font-size:var(--fs-caption);color:var(--text-secondary);}
+  .feature-list li svg{flex:none;width:20px;height:20px;color:var(--blue-600);margin-top:2px;}
+  .feature-list li.muted{color:var(--slate-400);}
+  .feature-list li.muted svg{color:var(--slate-400);}
+
+  /* ===== FAQ ===== */
+  .faq{max-width:760px;margin-inline:auto;display:flex;flex-direction:column;gap:var(--space-3);}
+  .faq-item{border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);overflow:hidden;}
+  .faq-q{width:100%;text-align:left;background:transparent;border:none;padding:var(--space-4) var(--space-5);
+    display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);
+    font-weight:700;font-size:var(--fs-caption);color:var(--slate-900);min-height:56px;}
+  .faq-q .chev{flex:none;width:22px;height:22px;color:var(--slate-500);transition:transform .2s ease;}
+  .faq-q[aria-expanded="true"] .chev{transform:rotate(180deg);color:var(--blue-600);}
+  .faq-a{padding:0 var(--space-5) var(--space-5);color:var(--text-secondary);font-size:var(--fs-caption);}
+  .faq-a[hidden]{display:none;}
+
+  .cta-band{background:linear-gradient(135deg,var(--blue-600),var(--blue-700));
+    border-radius:var(--radius-lg);padding:var(--space-10) var(--space-6);text-align:center;color:#fff;box-shadow:var(--shadow-lg);}
+  .cta-band h2{color:#fff;}
+  .cta-band p{color:rgba(255,255,255,.88);margin-top:var(--space-3);font-size:var(--fs-h3);}
+  .cta-band .hero-cta{display:flex;flex-wrap:wrap;gap:var(--space-3);justify-content:center;margin-top:var(--space-6);}
+  .cta-band .btn-primary{background:#fff;color:var(--blue-700);}
+  .cta-band .btn-primary:hover{background:var(--blue-50);}
+  .cta-band .btn-secondary{background:transparent;color:#fff;border-color:rgba(255,255,255,.5);}
+  .cta-band .btn-secondary:hover{background:rgba(255,255,255,.12);border-color:#fff;}
+
+  .site-footer{background:var(--slate-900);color:var(--slate-300);padding-block:var(--space-10) var(--space-6);}
+  .footer-grid{display:grid;gap:var(--space-8);}
+  .footer-grid .brand{color:#fff;}
+  .footer-about{color:var(--slate-400);font-size:var(--fs-caption);max-width:38ch;margin-top:var(--space-3);}
+  .footer-col h4{color:#fff;font-size:var(--fs-caption);text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--space-3);}
+  .footer-col a{display:inline-flex;min-height:36px;align-items:center;color:var(--slate-400);font-size:var(--fs-caption);}
+  .footer-col a:hover{color:#fff;text-decoration:none;}
+  .footer-bottom{display:flex;flex-wrap:wrap;gap:var(--space-3);justify-content:space-between;align-items:center;
+    border-top:1px solid rgba(255,255,255,.1);margin-top:var(--space-8);padding-top:var(--space-5);
+    font-size:var(--fs-caption);color:var(--slate-500);}
+  .footer-bottom a{color:var(--slate-400);}
+
+  @media (min-width:640px){ .container{padding-inline:var(--space-6);} }
+  @media (min-width:768px){
+    .nav-links{display:flex;}
+    .hamburger{display:none;}
+    .pricing-grid{grid-template-columns:repeat(3,1fr);}
+  }
+  @media (min-width:1024px){
+    .section{padding-block:var(--space-12);}
+    .footer-grid{grid-template-columns:2fr 1fr 1fr 1fr;}
+    h1{font-size:48px;} h2{font-size:var(--fs-h1);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important;}
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header" id="header">
+  <div class="container">
+    <nav class="nav" aria-label="Primary">
+      <a class="brand" href="index.html" aria-label="RegexProof home">
+        <svg class="logo" viewBox="0 0 32 32" role="img" aria-label="RegexProof logo" fill="none">
+          <rect x="2" y="2" width="28" height="28" rx="8" fill="#2563EB"/>
+          <text x="16" y="21" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="800" fill="#fff">.*</text>
+        </svg>
+        RegexProof
+      </a>
+      <ul class="nav-links">
+        <li><a class="nav-link" href="index.html">Home</a></li>
+        <li><a class="nav-link" href="product.html">Product</a></li>
+        <li><a class="nav-link" href="pricing.html" aria-current="page">Pricing</a></li>
+        <li><a class="nav-link" href="index.html#features">Features</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a class="btn-ghost" href="#login">Sign in</a>
+        <a class="btn btn-primary" href="/app">Start free</a>
+        <button class="hamburger" id="menuToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </nav>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">Home</a>
+    <a href="product.html">Product</a>
+    <a href="pricing.html" aria-current="page">Pricing</a>
+    <a href="index.html#features">Features</a>
+    <a class="btn btn-primary" href="/app">Start free</a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="section" aria-labelledby="pricing-title">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Pricing</span>
+        <h1 id="pricing-title" style="margin-top:var(--space-4)">Simple pricing that grows with your forges</h1>
+        <p>Start free with 10 forges a month. Upgrade to Pro for unlimited forges and saved history.</p>
+        <div class="billing-toggle" role="group" aria-label="Billing period switch">
+          <button type="button" id="billMonthly" aria-pressed="true">Monthly</button>
+          <button type="button" id="billAnnual" aria-pressed="false">
+            Yearly <span class="save-badge">Save ~17%</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- Free -->
+        <article class="plan" aria-labelledby="plan-free">
+          <h3 id="plan-free">Free</h3>
+          <p class="tagline">For the occasional pattern</p>
+          <div class="price">
+            <span class="currency">$</span>
+            <span class="amount" data-monthly="0" data-annual="0">0</span>
+            <span class="period" data-period>/ mo</span>
+          </div>
+          <p class="price-note" data-note>Free forever, no card required</p>
+          <a class="btn btn-secondary btn-block" href="/app">Start free</a>
+          <ul class="feature-list">
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>10 forges per month</li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>All 5 language flavors</li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Part-by-part explanation</li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Edge cases called out</li>
+            <li class="muted"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>Saved history</li>
+          </ul>
+        </article>
+
+        <!-- Pro (featured) -->
+        <article class="plan featured" aria-labelledby="plan-pro">
+          <h3 id="plan-pro">Pro</h3>
+          <p class="tagline">For developers who forge daily</p>
+          <div class="price">
+            <span class="currency">$</span>
+            <span class="amount" data-monthly="19" data-annual="190">19</span>
+            <span class="period" data-period>/ mo</span>
+          </div>
+          <p class="price-note" data-note>Monthly billing, cancel anytime</p>
+          <a class="btn btn-primary btn-block" href="/api/checkout?cycle=monthly">Go Pro</a>
+          <ul class="feature-list">
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Unlimited forges</li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>All 5 language flavors</li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Part-by-part explanation</li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Edge cases called out</li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Saved history</li>
+          </ul>
+        </article>
+
+        <!-- Team (placeholder tier) -->
+        <article class="plan" aria-labelledby="plan-team">
+          <h3 id="plan-team">Team</h3>
+          <p class="tagline">For teams standardizing patterns</p>
+          <div class="price">
+            <span class="amount" style="font-size:32px">Custom</span>
+          </div>
+          <p class="price-note" data-note>Volume and shared history</p>
+          <a class="btn btn-secondary btn-block" href="#contact">Contact us</a>
+          <ul class="feature-list">
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Everything in Pro</li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Shared team history</li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Priority support</li>
+            <li class="muted"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>SSO (roadmap)</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section section--alt" aria-labelledby="faq-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="faq-title">Pricing FAQ</h2>
+        <p>Questions about plans and billing.</p>
+      </div>
+      <div class="faq">
+        <div class="faq-item">
+          <button class="faq-q" id="faq1-q" aria-expanded="false" aria-controls="faq1-a">
+            Do I need a credit card for the free plan?
+            <svg class="chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="faq-a" id="faq1-a" role="region" aria-labelledby="faq1-q" hidden>
+            No. The Free plan includes 10 forges per month and never asks for a card. Upgrade to Pro only when you need unlimited forges and saved history.
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" id="faq2-q" aria-expanded="false" aria-controls="faq2-a">
+            What's the difference between monthly and yearly?
+            <svg class="chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="faq-a" id="faq2-a" role="region" aria-labelledby="faq2-q" hidden>
+            Both unlock the same Pro features. Yearly billing is $190/year versus $228 billed monthly — roughly 17% cheaper. Switch the toggle above to compare.
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" id="faq3-q" aria-expanded="false" aria-controls="faq3-a">
+            Can I cancel anytime?
+            <svg class="chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="faq-a" id="faq3-a" role="region" aria-labelledby="faq3-q" hidden>
+            Yes. Pro is billed per period and cancels at the end of the current period. You keep access until then, and the Free plan is always available.
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" id="faq4-q" aria-expanded="false" aria-controls="faq4-a">
+            Which payment methods are supported?
+            <svg class="chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="faq-a" id="faq4-a" role="region" aria-labelledby="faq4-q" hidden>
+            Checkout is handled by Waffo Pancake (merchant of record), which supports major international cards and localized payment methods. Currency and tax are calculated at checkout.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section" aria-labelledby="cta-title">
+    <div class="container">
+      <div class="cta-band">
+        <h2 id="cta-title">Forge your first regex free</h2>
+        <p>10 forges a month, no card required. Upgrade only when you need more.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary btn-lg" href="/api/checkout?cycle=monthly">Go Pro</a>
+          <a class="btn btn-secondary btn-lg" href="index.html">Back to home</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="index.html" aria-label="RegexProof home">
+          <svg class="logo" viewBox="0 0 32 32" role="img" aria-label="RegexProof logo" fill="none">
+            <rect x="2" y="2" width="28" height="28" rx="8" fill="#2563EB"/>
+            <text x="16" y="21" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="800" fill="#fff">.*</text>
+          </svg>
+          RegexProof
+        </a>
+        <p class="footer-about">A developer tool that turns plain-English descriptions into correct, explained regular expressions.</p>
+      </div>
+      <nav class="footer-col" aria-label="Product">
+        <h4>Product</h4>
+        <a href="product.html">Features</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="#changelog">Changelog</a>
+      </nav>
+      <nav class="footer-col" aria-label="Resources">
+        <h4>Resources</h4>
+        <a href="#docs">Docs</a>
+        <a href="#blog">Blog</a>
+        <a href="#support">Support</a>
+      </nav>
+      <nav class="footer-col" aria-label="Company">
+        <h4>Company</h4>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+        <a href="#privacy">Privacy</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 RegexProof. All rights reserved.</span>
+      <span><a href="#terms">Terms</a> · <a href="#privacy">Privacy</a></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    "use strict";
+    var toggle=document.getElementById("menuToggle"),menu=document.getElementById("mobileMenu");
+    if(toggle&&menu){
+      toggle.addEventListener("click",function(){
+        var open=menu.classList.toggle("open");
+        toggle.setAttribute("aria-expanded",open?"true":"false");
+        toggle.setAttribute("aria-label",open?"Close menu":"Open menu");
+      });
+      menu.querySelectorAll("a").forEach(function(a){a.addEventListener("click",function(){
+        menu.classList.remove("open");toggle.setAttribute("aria-expanded","false");toggle.setAttribute("aria-label","Open menu");
+      });});
+    }
+    var header=document.getElementById("header");
+    var onScroll=function(){header.classList.toggle("scrolled",window.scrollY>8);};
+    window.addEventListener("scroll",onScroll,{passive:true});onScroll();
+
+    var m=document.getElementById("billMonthly"),a=document.getElementById("billAnnual");
+    function setBilling(annual){
+      m.setAttribute("aria-pressed",annual?"false":"true");
+      a.setAttribute("aria-pressed",annual?"true":"false");
+      document.querySelectorAll(".amount[data-monthly]").forEach(function(el){
+        // The "Custom" plan has no data-monthly; skip it.
+        if(el.dataset.monthly===undefined) return;
+        el.textContent=annual?el.dataset.annual:el.dataset.monthly;
+      });
+      document.querySelectorAll(".period[data-period]").forEach(function(el){
+        el.textContent=annual?"/ yr":"/ mo";
+      });
+      document.querySelectorAll(".price-note[data-note]").forEach(function(el){
+        if(el.closest(".plan").querySelector('[data-monthly="0"]')){
+          el.textContent="Free forever, no card required";
+        } else if(el.closest(".plan").querySelector('[data-monthly="19"]')){
+          el.textContent=annual?"Billed $190/year, cancel anytime":"Monthly billing, cancel anytime";
+        }
+      });
+      // keep checkout links in sync with the billing period (display price must match charge)
+      document.querySelectorAll('a[href*="/api/checkout"]').forEach(function(link){
+        link.setAttribute("href", annual ? "/api/checkout?cycle=yearly" : "/api/checkout?cycle=monthly");
+      });
+    }
+    if(m&&a){
+      m.addEventListener("click",function(){setBilling(false);});
+      a.addEventListener("click",function(){setBilling(true);});
+    }
+
+    document.querySelectorAll(".faq-q").forEach(function(btn){
+      btn.addEventListener("click",function(){
+        var exp=btn.getAttribute("aria-expanded")==="true";
+        btn.setAttribute("aria-expanded",exp?"false":"true");
+        document.getElementById(btn.getAttribute("aria-controls")).hidden=exp;
+      });
+    });
+  })();
+</script>
+</body>
+</html>

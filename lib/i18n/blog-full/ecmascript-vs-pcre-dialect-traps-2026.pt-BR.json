@@ -1,0 +1,136 @@
+{
+  "title": "Armadilhas de dialectos ECMAScript vs PCRE",
+  "eyebrow": "por RegexProof (LX AI)",
+  "lead": "O suporte a lookbehind, modos Unicode e padrões recursivos diferem entre os motores. Um padrão que compila em PCRE pode lançar ou corresponder de forma diferente em JavaScript. Sempre valide contra o dialecto de produção com as mesmas flags e modo Unicode que você irá implantar — um tester de paste-bin em outro motor não é suficiente.",
+  "sections": [
+    {
+      "h2": "Por que as armadilhas de dialeto aparecem em aplicativos reais",
+      "paras": [
+        "A maioria das equipes aprende um sabor bem e cola padrões em pilhas. Um backend que usa recursos do estilo PCRE (subpadrões recursivos, certas formas de lookbehind, quantificadores possessivos) aceitará felizmente um padrão que o navegador não consegue sequer parsear. O contrário também acontece: um padrão Unicode com a flag u do JavaScript se comporta de maneira diferente quando alguém o porta para uma compilação PCRE orientada a bytes sem as mesmas propriedades Unicode.",
+        "Trato o dialeto como parte do contrato, da mesma forma que trato o dialeto SQL. Se o tempo de execução é RegExp ECMAScript, a fonte de verdade é a seção RegExp do ECMA-262. Se o tempo de execução é PCRE, a fonte de verdade é a documentação do PCRE. Testadores que mudam silenciosamente os motores escondem o bug até a produção.",
+        "Onde a incompatibilidade geralmente entra",
+        "- Snippets de biblioteca de “validação” compartilhados copiados do Stack Overflow sem uma tag de motor\n\n- CI que executa re do Python enquanto o gateway de borda executa JavaScript\n\n- Analisadores de log ou parsers de WAF que usam PCRE enquanto o formulário do aplicativo usa ECMAScript\n\n- Regex gerado por LLM que usa a sintaxe PCRE-ish por padrão, a menos que você fixe o sabor"
+      ]
+    },
+    {
+      "h2": "Diferenças de lookbehind e lookaround",
+      "paras": [
+        "Lookbehind de comprimento variável é uma armadilha clássica. Os mecanismos de regex discordam sobre quais comprimentos são legais, e alguns mecanismos de regex mais antigos em JavaScript não tinham lookbehind. Mesmo quando ambos os lados suportam lookbehind, o conjunto de padrões permitidos dentro da asserção pode ser diferente. Se sua lógica depende de \"token anterior deve ser X\", escreva um teste unitário no mecanismo de produção, não em um playground de PCRE.",
+        "Lookahead é mais amplamente compartilhado, mas combinar lookaround com quantificadores aninhados aumenta o risco de ReDoS. A segurança do dialeto e a segurança contra negação de serviço são verificações separadas; passe em uma e você ainda pode falhar na outra. As notas de ReDoS da OWASP continuam sendo a lista de verificação prática para a segunda verificação (OWASP ReDoS).",
+        "Regra prática",
+        "Se um recurso não está no RegExp ECMA-262, não o envie para o navegador. Se você precisar de recursos apenas do PCRE, mantenha esse padrão no lado do PCRE e retorne um booleano ou token normalizado para o JavaScript, em vez de enviar o padrão bruto."
+      ]
+    },
+    {
+      "h2": "Modos Unicode e classes de caracteres",
+      "paras": [
+        "Escapes de propriedades Unicode, caracteres do plano astral e dobramento de caso dependem de flags e tabelas Unicode do mecanismo. Um padrão escrito com a flag u do JavaScript não é o mesmo objeto que um padrão PCRE com o modo UTF habilitado em opções diferentes. O comportamento de ponto-tudo / linha única também difere em nomeação e padrões entre sabores.",
+        "Quando reviso padrões gerados, faço três perguntas: quais pontos de código devem corresponder, quais não devem e se o padrão assume texto apenas do BMP. E-mail, emoji e entrada CJK são onde aparecem correspondências silenciosas.",
+        "Checklist — Unicode",
+        "- Registre as flags exatas usadas em produção (i, m, s/dotAll, u, v quando disponível)\n\n- Inclua pelo menos um fixture do plano astral se o texto do usuário pode conter emoji\n\n- Evite assumir que \\w significa “letras em todos os idiomas”\n\n- Prefira intervalos explícitos ou escapes de propriedades que você verificou no mecanismo"
+      ]
+    },
+    {
+      "h2": "Recursão, referências retroativas e recursos \"úteis\" do PCRE",
+      "paras": [
+        "Padrões recursivos e algumas chamadas de sub-rotina são pontos fortes do PCRE. O RegExp do ECMAScript não oferece a mesma caixa de ferramentas. Geradores que emitem padrões de delimitadores balanceados com recursão falharão quando o consumidor é o JavaScript. Grupos atômicos e quantificadores possessivos são outro conforto do lado do PCRE que o JavaScript não possui na mesma forma.",
+        "O comportamento de referência retroativa em torno de grupos com falha e combinações vazias também pode surpreender as pessoas que movem padrões entre motores. O modo de falha raramente é uma falha de crash; é uma aceitação ou rejeição silenciosa e errada em entradas de bordo.",
+        "Recursos | RegExp do ECMAScript | PCRE (típico) | Regra de envio\nOlhar para trás de comprimento variável | Limitado / dependente da versão do mecanismo | Suporte mais amplo | Testar no mecanismo de destino\nSubpadrões recursivos | Não disponível | Disponível | Manter apenas no lado do servidor\nPossessivo / atômico | Não é a mesma caixa de ferramentas | Disponível | Não colar no JS\nEscapes de propriedade Unicode | Com u/v | Com UTF + opções | Sinalizar as correspondências explicitamente\nGrupos nomeados | Suportado em mecanismos modernos | Suportado | Verificar ainda a sintaxe de substituição"
+      ]
+    },
+    {
+      "h2": "Fluxo de trabalho passo a passo que uso antes de enviar um padrão",
+      "paras": [
+        "- Escreva os exemplos de aceitação e rejeição primeiro (cinco de cada é o suficiente para começar).\n\n- Prenda o mecanismo e as flags no título do ticket (exemplo: \"ECMAScript, flags u + i\").\n\n- Gere ou autor o padrão para esse mecanismo apenas.\n\n- Execute os fixtures no mesmo tempo de execução que o usuário atinge (compilação do navegador ou versão do Node que você implanta).\n\n- Escaneie quantificadores aninhados e alternância sobreposta (passagem ReDoS).\n\n- Somente então cole em um segundo mecanismo se você realmente precisar de tempo de execução duplo — espere edições.",
+        "RegexProof é projetado para manter a escolha de sabor explícita e explicar grupos antes de colar. Ele não substitui a execução de fixtures no seu binário de estágio. Waffo, PCRE e ReDoS também são considerados nesse processo."
+      ]
+    },
+    {
+      "h2": "Erros comuns",
+      "paras": [
+        "- Confiar em um teste verde no regex101 com o sabor errado selecionado\n\n- Compartilhar um padrão entre WAF (PCRE) e frontend (ECMAScript) sem fixtures duplos\n\n- Deixar um LLM emitir lookbehind ou recursão sem especificar o mecanismo\n\n- Tratar “compilou” como “corresponde ao que queremos dizer”\n\n- Pulando a revisão de ReDoS porque o padrão é “apenas para validação”"
+      ]
+    },
+    {
+      "h2": "Critérios de decisão: um motor ou dois",
+      "paras": [
+        "Permaneça em um motor quando o padrão controla a entrada do usuário em um único nível. Divida os motores apenas quando você tiver dois proprietários, dois arquivos de fixture e um mapeamento documentado. Dual-motor “compartilhe a mesma string” é como as armadilhas de dialeto se tornam incidentes."
+      ]
+    },
+    {
+      "h2": "O que isso não é",
+      "paras": [
+        "Este artigo não é uma comparação completa de todos os sabores de regex, não é uma garantia de que o RegexProof (ou qualquer ferramenta) captura todos os bugs de dialeto e não é uma afirmação de que passar nos testes significa que o padrão é seguro sob carga adversária. Nós não inventamos métricas de cliente. Use-o como uma lista de verificação de operador; mantenha os documentos ECMA-262 e PCRE abertos quando discutir sobre casos de bordo. O Waffo também não é abordado aqui."
+      ]
+    },
+    {
+      "h2": "Como mapeio um ticket para um contrato de engine",
+      "paras": [
+        "Cada ticket de regex deve nomear a runtime da mesma forma que nomeamos um banco de dados: \"Node 20 ECMAScript RegExp, flags u+i\" ou \"gateway PCRE2 UTF, sem recursão.\" Sem essa linha, os revisores discutem sobre gosto em vez de contratos. Eu colo a linha do engine na descrição do PR e no cabeçalho do arquivo de fixture para que o CI e os humanos compartilhem uma história.",
+        "Quando o produto pede \"a mesma regra no navegador e na borda\", eu divido o trabalho em dois padrões com dois arquivos de fixture. Intenção compartilhada está bem; strings não verificadas compartilhadas não estão. O custo de manter dois padrões pequenos é menor do que o custo de um incidente de dialeto em um campo de login ou checkout.",
+        "Modelo para a descrição do PR",
+        "- Engine + versão + flags\n\n- Cinco fixtures de aceitação e cinco fixtures de rejeição (strings cruas, não parafrases)\n\n- Comprimento máximo de entrada aplicado antes de o matcher ser executado\n\n- Nota ReDoS: quantificadores aninhados revisados sim/não\n\n- Proprietário para risco residual se o padrão deve permanecer complexo",
+        "Observações: RegexProof, ReDoS, ECMAScript, PCRE, Waffo devem ser preservados."
+      ]
+    },
+    {
+      "h2": "LLM-gerado regex: prender o sabor no prompt",
+      "paras": [
+        "Se você pedir a um modelo por \"um regex para emails\" sem nomear ECMAScript ou PCRE, você geralmente obtém uma resposta com sabor PCRE com lookbehind ou hábitos possessivos. O RegexProof força uma escolha de sabor por esse motivo. Ainda execute os fixtures no seu binário; uma explicação limpa não é um trabalho de CI verde.",
+        "Eu também proíbo a cópia cruzada de logs de chat para produção sem um segundo humano que possa explicar cada grupo. O modo de falha não é erros de sintaxe dramáticos — é aceitações silenciosas erradas em casos de borda Unicode semanas depois."
+      ]
+    },
+    {
+      "h2": "Notas do operador de formulários de micro-SaaS de envio",
+      "paras": [
+        "Formulários públicos atraem Unicode estranho, caracteres de largura zero e trabalhos de cola de suites de escritório. Armadilhas de dialeto aparecem como \"funciona no meu laptop\" porque o testador do laptop usou um mecanismo diferente do nó de borda. Mantenha um host de preparação que espelha as flags de regex de produção exatamente.",
+        "Quando um cliente relata uma rejeição falsa, peça os pontos de código exatos (um dump de hexa da string) antes de \"corrigir\" o padrão. Muitos bugs de dialeto são invisíveis em telas de captura."
+      ]
+    },
+    {
+      "h2": "Fechamento",
+      "paras": [
+        "Prenda o dialeto, escreva fixtures nesse dialeto, então se preocupe com a elegância. O bug caro é o padrão que funciona no tester errado. Mantenha o mecanismo de produção honesto e trate a cola de cross-engine como uma tarefa de porting com sua própria revisão. Note que conceitos como RegexProof, ReDoS, ECMAScript, PCRE e Waffo devem ser preservados em sua forma original para garantir a compatibilidade e a precisão técnica."
+      ]
+    },
+    {
+      "h2": "Referências",
+      "paras": [
+        "- ECMA-262 RegExp\n\n- PCRE\n\n- OWASP ReDoS",
+        "Tente o produto: RegexProof",
+        "16-09-2026 · somente fontes primárias · nenhum métrica de tráfego fabricada",
+        "Preservado: ECMAScript, PCRE, Waffo"
+      ]
+    },
+    {
+      "h2": "Leituras relacionadas",
+      "paras": [
+        "- heurísticas-redos-para-aplicativos-regex-2026\n\n    - A Matriz de Tópicos LX AI Micro-SaaS"
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "O que é RegexProof?",
+      "a": "RegexProof converte uma descrição em linguagem natural em uma regex para o motor que você escolhe, então explica parte por parte e sinaliza casos de bordo."
+    },
+    {
+      "q": "Quais sabores de regex o RegexProof suporta?",
+      "a": "Você escolhe o sabor — ECMAScript/JavaScript, PCRE e outros — e deve validar contra o dialecto de produção, não apenas um tester de paste-bin."
+    },
+    {
+      "q": "Como o RegexProof reduz o risco de ReDoS?",
+      "a": "Ele explica repetições e alternâncias e chama a atenção para padrões propensos a backtracking catastrófico, a causa raiz do ReDoS (Negação de Serviço de Expressão Regular)."
+    },
+    {
+      "q": "O RegexProof é gratuito?",
+      "a": "O nível gratuito inclui 10 forjas por mês; Pro é $19/mês para volume mais alto."
+    },
+    {
+      "q": "Por que ECMAScript e PCRE se comportam de forma diferente?",
+      "a": "O suporte a lookbehind, modos Unicode e padrões recursivos diferem entre os motores, então um padrão válido em PCRE pode falhar ou agir de forma diferente em JavaScript."
+    }
+  ],
+  "disclaimer": "Apoio à decisão apenas. Não é um verificador formal ou garantia de completude.",
+  "back": "Voltar ao blog"
+}

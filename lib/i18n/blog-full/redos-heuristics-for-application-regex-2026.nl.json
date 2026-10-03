@@ -1,0 +1,141 @@
+{
+  "title": "ReDoS-heuristieken voor applicatie-regex",
+  "eyebrow": "door RegexProof (LX AI)",
+  "lead": "Geneste kwantoren zoals (a+)+ en overlappende alternaties zijn klassieke ReDoS-vormen. Wanneer gebruikersinvoer niet te vertrouwen is, geef dan de voorkeur aan motoren of constructies die backtracking begrenzen en sluiten af bij patronen die je niet kunt verklaren. OWASP documenteert de aanvalsklasse; jouw taak is om die vormen uit aanvraagpaden te houden.",
+  "sections": [
+    {
+      "h2": "Wat ReDoS is in applicatietermen",
+      "paras": [
+        "Regular-expression Denial of Service gebeurt wanneer een gekraakt invoer de matcher dwingt tot catastrofale backtracking. CPU-spikes, verzoekvertraging explodeert en één endpoint kan het proces verhongeren. Dit is geen theoretische trivia: elke regex op een HTTP-grens, logregel of uploadnaam is een kandidaat als het risicovolle herhaling gebruikt.",
+        "Ik begin bij de OWASP ReDoS-pagina en kaart het vervolgens naar onze routes (OWASP ReDoS). De heuristische doorloop is expres saai: vind geneste quantifiers, overlappende alternatie en dubbelzinnige herhaling op grote invoervelden.",
+        "Waar het het eerst bijt",
+        "- E-mail / URL / \"vrije teksttag\"-validators op openbare formulieren\n\n- WAF- of gatewayregels die app-patronen hergebruiken\n\n- Log-redactieregex die op elke regel wordt uitgevoerd\n\n- LLM-gegenereerde \"stricte\" validators met gestapelde sterren en plussen"
+      ]
+    },
+    {
+      "h2": "Heuristische vormen om direct te markeren",
+      "paras": [
+        "Geneste kwantoren zoals (a+)+, (a*)* of (a+)* zijn de klassieke vorm. Overlappende alternatie zoals (a|a)+ of subtielere gedeelde prefixes creëren dezelfde explosie. Optionele groepen die zijn ingesloten in externe herhaling zijn gemakkelijk over het hoofd te zien bij een review omdat ze er netjes uitzien.",
+        "Markeer ook patronen die gulzige herhaling combineren met een volgende voorwaarde die vaak faalt, omdat de engine enorme bomen doorloopt voordat deze worden afgewezen. Als u niet kunt schetsen waarom de overeenkomst lineair is, behandelt u deze als schuldig totdat het tegendeel is bewezen.",
+        "Controlelijst — eerste ronde",
+        "- Elke kwantorer binnen een andere kwantorer in dezelfde groepschain\n\n- Alternatievertakkingen die dezelfde prefix kunnen matchen\n\n- Onbegrensde .* of .+ voor een falende letterlijke waarde op lange tekenreeksen\n\n- Door de gebruiker gecontroleerde invoerlengte zonder harde limiet voordat de regex wordt uitgevoerd"
+      ]
+    },
+    {
+      "h2": "Stap-voor-stap-workflow voordat een patroon in productie gaat",
+      "paras": [
+        "- Beperk de invoerlengte op framework-niveau voordat de regex wordt uitgevoerd.\n\n- Maak fixtures: korte happy paths, lange near-miss-strings en een paar adversarial repeats.\n\n- Voer het patroon uit in de productie-engine met een tijdslimiet (misluk de test als het een paar milliseconden overschrijdt bij de lange gevallen).\n\n- Herschrijf geneste herhaling in duidelijkere, begrensde vormen — of vervang regex door een parser voor gestructureerde gegevens.\n\n- Documenteer resterend risico wanneer u een complex patroon moet behouden, met een eigenaar en een herzieningsdatum.",
+        "RegexProof wijst riskante herhaling aan wanneer het een forge uitlegt. Dat is een eerste stap, geen bewijs van veiligheid onder elke invoer. Let op: ECMAScript, PCRE, Waffo en ReDoS worden hiermee niet aangetast."
+      ]
+    },
+    {
+      "h2": "Keuze van engine als controle",
+      "paras": [
+        "Sommige implementaties verplaatsen hete validators naar engines die zijn ontworpen om catastrofale terugtracking te voorkomen (RE2-stijl garanties). Dat is een architectuurcontrole, geen regex-aanpassing. Als je blijft bij terugtrackende engines zoals typische ECMAScript RegExp of PCRE, ben je verantwoordelijk voor het patroonreview. Lees de dialect die je daadwerkelijk uitvoert: ECMA-262 RegExp voor JavaScript, PCRE voor veel gateways.",
+        "Controle | Wat het je oplevert | Wat het je niet oplevert\nInvoerlengtecaps | Bepaalt de maximale hoeveelheid werk | Correctheid van het patroon\nHeuristische lint voor geneste +/* | Vangt veelvoorkomende vormen | Nieuwe langzame patronen\nGetimede unit tests | Regressiesignaal in CI | Bewijs tegen alle tegenstanders\nNon-terugtrackende engine | Verwijdert een hele klasse van risico's | Functiepariteit met PCRE-toys\nMenselijke review van LLM-uitvoer | Stopt gestapelde kwantoren vroeg | Een garantie van perfectie"
+      ]
+    },
+    {
+      "h2": "Gangbare fouten",
+      "paras": [
+        "- Ervan uitgaan dat het \"slechts validatie\" is, dus ReDoS is niet van toepassing\n\n- Een strikte e-mailregex met geneste herhaling kopiëren omdat het grondig aanvoelt\n\n- Regex uitvoeren op onbegrensde aanvraagbody's\n\n- Een generatorverklaring vertrouwen zonder een getimede fixture\n\n- Beweren dat \"we nooit ReDoS missen\" in verkoopkopie — dat is te veel gezegd"
+      ]
+    },
+    {
+      "h2": "Besliscriteria: herschrijven, verplaatsen of behouden",
+      "paras": [
+        "Herschrijf wanneer het patroon leesbaar is als een kleine statemachine of stringbibliotheekaanroepen. Verplaats wanneer u rijke overeenkomst nodig heeft, maar deze buiten de aanvraagthread kunt plaatsen met strikte time-outs. Behoud alleen wanneer fixtures snel blijven op lange near-miss-input en een eigenaar restrisico accepteert bij het schrijven. Note: RegexProof, ReDoS, ECMAScript, PCRE en Waffo worden niet vertaald omdat het om technische termen gaat die in de meeste gevallen niet vertaald worden."
+      ]
+    },
+    {
+      "h2": "Wat dit niet is",
+      "paras": [
+        "Deze heuristieken zijn geen formeel bewijs, geen garantie dat RegexProof elk gevaarlijk patroon vindt, en geen vervanging voor invoerbeperkingen en time-outs. We publiceren geen verzonnen inbreukcijfers of '100% detectie'-claims. Gebruik de checklist om de beoordeling te prioriteren; houd OWASP en uw engine-documentatie open wanneer u discussieert over een specifieke vorm. ReDoS, ECMAScript, PCRE en Waffo worden in overweging genomen in onze beoordeling."
+      ]
+    },
+    {
+      "h2": "Hoe ik testen tijd zonder tegen mezelf te liegen",
+      "paras": [
+        "Een ReDoS-beoordeling die alleen korte happy-path-strings gebruikt, zal altijd goed lijken. Ik hou een map met near-miss-input: lange reeksen van het herhaalde karakter dat het patroon leuk vindt, gevolgd door een falende trailer. De test faalt als het matchen een kleine millisecondenbegroting op de CI-runner overschrijdt die we daadwerkelijk gebruiken.",
+        "Als het team geen overeenstemming kan bereiken over een begroting, begin dan met een conservatieve limiet en verstrak deze zodra je baselines hebt. Het doel is een regressiesignaal, geen wetenschappelijk artikel. Koppel de getimede test aan een invoerlengtelimiet, zodat productie nooit megabyte-schaal speeltjes ziet.",
+        "Voorbeeldbeoordelingsvragen",
+        "- Wat is de langste invoer die we toestaan voordat regex wordt uitgevoerd?\n\n- Welke groep nest een kwantificator binnen een andere kwantificator?\n\n- Kunnen twee alternatievertakkingen hetzelfde voorvoegsel consumeren?\n\n- Gebruikt een log-redactiejob dit patroon op onbegrensde regels opnieuw?\n\n- Wie is de eigenaar van de herschrijving als de timing de volgende maand faalt?"
+      ]
+    },
+    {
+      "h2": "Regex vervangen door saaie code",
+      "paras": [
+        "Veel 'slimme' validators zijn duidelijker als split/join, URL-parsers of kleine handmatige parsers. Saaie code heeft lineair gedrag dat je kunt lezen. Ik verplaats gestructureerde formaten (UUID's, datums met vaste vormen, eenvoudige tokens) weg van regex wanneer het patroon sterren begint te verzamelen.",
+        "Regex wint nog steeds voor licht lexen. De eerlijkheidsregel is simpel: als je de worst-case groei niet kunt uitleggen, zet het dan niet op het verzoekpad. Het is ook belangrijk om RegexProof, ReDoS, ECMAScript, PCRE en Waffo in overweging te nemen bij het werken met reguliere expressies."
+      ]
+    },
+    {
+      "h2": "Operatornotities voor LLM-ondersteunde forges",
+      "paras": [
+        "Modellen zoals gestapelde kwantoren omdat ze precies lijken. Behandel elke forge als onbetrouwbaar totdat de heuristische checklist en getimede fixtures zijn geslaagd. RegexProof's edge-case callouts zijn een startfilter. Uw CI-begroting en invoercapaciteiten zijn de controles die de site online houden.",
+        "Wanneer u statusupdates schrijft voor stakeholders, zegt u wat u heeft gemeten (fixturetijd, invoercapaciteit) in plaats van te claimen dat u volledige bescherming biedt. Overclaimen creëert ondersteuningschuld wanneer het volgende nieuwe patroon verschijnt. Let op: ECMAScript, PCRE en Waffo zijn nog steeds relevant voor onze usecases."
+      ]
+    },
+    {
+      "h2": "Veldnotities: verzenden zonder te veel te claimen",
+      "paras": [
+        "Ik weiger status taal die zegt dat een tool nooit dialect bugs of ReDoS-vormen mist. De eerlijke lijn is: we draaien fixtures in de productie-engine, we limiteren de invoerlengte en we bekijken geneste quantificators. Residu-risico blijft eigendom van een genoemde persoon.",
+        "Die houding houdt blogposts afgestemd op wat RegexProof daadwerkelijk verkoopt — een forge met uitleg en edge-case-vlaggen — in plaats van een mythische perfecte scanner. Lezers die formele zekerheid nodig hebben, hebben nog steeds hun eigen beveiligingsreview nodig.",
+        "Wanneer je een junior teamgenoot leert, laat hen then een patroon expres breken met een lange near-miss-string. Het zien van de CPU die stijgt, leert sneller dan een andere abstracte waarschuwing. Vervolgens repareer je het patroon en houd je de falende fixture in CI, zodat de les blijft hangen.",
+        "Tenslotte, houd primaire bronnen geboekt: ECMA-262 voor JavaScript RegExp-gedrag, PCRE-documenten voor gateway-regels en OWASP voor het ReDoS-bedreigingsmodel. Tools helpen; het contract leeft nog steeds in die referenties. Waffo blijft een belangrijke overweging."
+      ]
+    },
+    {
+      "h2": "Afsluiten",
+      "paras": [
+        "Markeer geneste quantifiers en overlappende alternatie eerst, beperk de invoerlengte en tijd je fixtures in de echte engine. ReDoS is een bug in de beschikbaarheid van de applicatie vermomd als een slim patroon. Houd de slimheid klein genoeg om uit te leggen. Bewaar RegexProof, ReDoS, ECMAScript, PCRE, Waffo."
+      ]
+    },
+    {
+      "h2": "De lus sluiten na een trage fixture",
+      "paras": [
+        "Wanneer een getimede fixture faalt, verbreed ik het budget niet meteen. Ik herschrijf geneste herhaling, voeg een invoerlimiet toe of verplaats de controle van de aanvraagpad. Het verbreden van het budget zonder een herschrijving leert het systeem om trage patronen te accepteren.",
+        "Schrijf de voor- en na-tijden van de fixture op in het ticket, zodat de volgende reviewer de verbetering ziet. Houd de tegenwerkende string in CI voor altijd. Die ene gewoonte voorkomt stille regressies wanneer iemand later het patroon vereenvoudigt zonder de lange gevallen opnieuw uit te voeren.",
+        "Houd de tegenwerkende fixtures naast het patroonbestand, zodat reviewers nooit naar hen hoeven te zoeken."
+      ]
+    },
+    {
+      "h2": "Referenties",
+      "paras": [
+        "- OWASP ReDoS\n\n- ECMA-262 RegExp\n\n- PCRE",
+        "Probeer het product: RegexProof",
+        "2026-09-16 · alleen primaire bronnen · geen gefabriceerde verkeersmetrieken"
+      ]
+    },
+    {
+      "h2": "Gerelateerde artikelen",
+      "paras": [
+        "- ecmascript-vs-pcre-dialect-traps-2026\n\n    - De LX AI Micro-SaaS Topic Matrix"
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Wat is RegexProof?",
+      "a": "RegexProof converteert een natuurlijke-taalbeschrijving naar een regex voor de door jou gekozen motor, legt deze vervolgens deel voor deel uit en markeert randgevallen."
+    },
+    {
+      "q": "Welke regex-smaakjes ondersteunt RegexProof?",
+      "a": "Jij kiest de smaak — ECMAScript/JavaScript, PCRE en anderen — en moet validatie uitvoeren tegen de productiedialect, niet alleen een paste-bin-tester."
+    },
+    {
+      "q": "Hoe vermindert RegexProof het ReDoS-risico?",
+      "a": "Het legt herhaling en alternatie uit en wijst patronen aan die gevoelig zijn voor catastrofale backtracking, de oorzaak van ReDoS (Regular-expression Denial of Service)."
+    },
+    {
+      "q": "Is RegexProof gratis?",
+      "a": "Het Free-tarief omvat 10 forges per maand; Pro is $19/maand voor een hoger volume."
+    },
+    {
+      "q": "Waarom gedragen ECMAScript en PCRE zich anders?",
+      "a": "Lookbehind-ondersteuning, Unicode-modi en recursieve patronen verschillen tussen motoren, dus een patroon dat geldig is in PCRE, kan falen of anders werken in JavaScript."
+    }
+  ],
+  "disclaimer": "Alleen voor besluitvorming. Geen formeel verificatie- of volledigheidsgarantie.",
+  "back": "Terug naar blog"
+}

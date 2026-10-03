@@ -1,57 +1,37 @@
 import Head from 'next/head'
+import Layout from '../components/Layout'
+import { useT } from '../lib/i18n/provider'
 
-export default function Page() {
-  const NAME = "RegexProof";
+const SITE = 'https://regexproof.lxsaihub.com'
+
+export default function UseCasesPage() {
+  const { t, locale } = useT()
+  const title = t('pages.ucTitle')
+  const desc = t('pages.ucDesc')
+  const segs = [1, 2, 3, 4].map((n) => ({ name: t(`pages.uc${n}Title`), pain: t(`pages.uc${n}Pain`), help: t(`pages.uc${n}Help`) }))
+  const ld = { '@context': 'https://schema.org', '@type': 'WebPage', name: title, url: SITE + '/use-cases', description: desc, inLanguage: locale }
   return (
-    <>
+    <Layout>
       <Head>
-        <title>{NAME} — Use cases</title>
-        <meta name="description" content={NAME + " — Use cases by team and role."} />
+        <title>{title}</title>
+        <meta name="description" content={desc} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       </Head>
-      <div className="min-h-screen bg-slate-50 text-slate-800">
-        <header className="border-b border-slate-200 bg-white">
-          <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="/" className="font-bold text-slate-900">{NAME}</a>
-            <nav className="hidden md:flex gap-6 text-sm font-semibold text-slate-500">
-              <a href="/use-cases" className="hover:text-slate-900">Use cases</a>
-              <a href="/integrations" className="hover:text-slate-900">Integrations</a>
-              <a href="/how-it-works" className="hover:text-slate-900">How it works</a>
-              <a href="/security" className="hover:text-slate-900">Security</a>
-              <a href="/blog" className="hover:text-slate-900">Blog</a>
-            </nav>
-          </div>
-        </header>
-        <main className="max-w-3xl mx-auto px-6 py-14">
-          <h1 className="text-3xl font-bold text-slate-900">Use cases</h1>
-          <p className="mt-3 text-slate-600">Describe the pattern, get a working regex.</p>
-          <div className="mt-8 grid gap-5 sm:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h3 className="font-semibold text-slate-900">Operations &amp; compliance leads</h3>
-            <p className="mt-2 text-sm text-slate-600"><span className="font-medium">Pain:</span> Need to standardize this without hiring a specialist team.</p>
-            <p className="mt-2 text-sm text-slate-600"><span className="font-medium">How RegexProof helps:</span> RegexProof turns raw input into a reviewed, exportable result in minutes.</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h3 className="font-semibold text-slate-900">Small teams &amp; agencies</h3>
-            <p className="mt-2 text-sm text-slate-600"><span className="font-medium">Pain:</span> Lack the bandwidth to do this manually for every client.</p>
-            <p className="mt-2 text-sm text-slate-600"><span className="font-medium">How RegexProof helps:</span> Self-serve: paste input, get a structured deliverable and share it.</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h3 className="font-semibold text-slate-900">Founders &amp; indie builders</h3>
-            <p className="mt-2 text-sm text-slate-600"><span className="font-medium">Pain:</span> Want a defensible, repeatable this step in their product.</p>
-            <p className="mt-2 text-sm text-slate-600"><span className="font-medium">How RegexProof helps:</span> RegexProof is the drop-in layer they can white-label or embed.</p>
-          </div>
-          </div>
-        </main>
-        <footer className="border-t border-slate-200 bg-white">
-          <div className="max-w-5xl mx-auto px-6 py-8 text-sm text-slate-500 flex flex-wrap gap-6">
-            <a href="/security" className="hover:text-slate-900">Security</a>
-            <a href="/use-cases" className="hover:text-slate-900">Use cases</a>
-            <a href="/integrations" className="hover:text-slate-900">Integrations</a>
-            <a href="/how-it-works" className="hover:text-slate-900">How it works</a>
-            <a href="/blog" className="hover:text-slate-900">Blog</a>
-          </div>
-        </footer>
+      <div className="max-w-4xl">
+        <div className="text-xs font-bold tracking-widest uppercase text-indigo-600 mb-3">{t('pages.ucEyebrow')}</div>
+        <h1 className="text-4xl font-extrabold tracking-tight mb-4">{t('pages.ucH1')}</h1>
+        <p className="text-lg text-slate-600 mb-10">{t('pages.ucIntro')}</p>
+        <div className="space-y-5">
+          {segs.map((s) => (
+            <div key={s.name} className="rounded-2xl border border-slate-200 p-6 bg-white">
+              <h2 className="text-xl font-bold mb-2 text-slate-900">{s.name}</h2>
+              <p className="text-sm text-slate-600 mb-2"><span className="font-semibold text-slate-900">{t('pages.painLabel')} </span>{s.pain}</p>
+              <p className="text-sm text-slate-600"><span className="font-semibold text-slate-900">{t('pages.helpLabel')} </span>{s.help}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-slate-400 mt-8">{t('pages.ucRefs')}</p>
       </div>
-    </>
+    </Layout>
   )
 }
